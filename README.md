@@ -27,10 +27,30 @@ It developed an XGBoost model for credit default prediction, achieving a validat
 - SQL (for data extraction queries)
 - Tableau (for visualization, see `/images` folder)
 
-## Tableau Dashboard
+## Tableau chart - Key Insights from Feature Engineering
+## Default Rate by Number of Previous Refusals
 ![Annuity by Contract_status](images-visualization/Refusal-Default.png)
+**Observations:**
+- Clients with **0 previous refusals** → default rate: ~8%
+- Clients with **1 previous refusal** → default rate: ~15% (nearly doubled)
+- Clients with **2 previous refusals** → default rate: ~20%
+- Clients with **5+ previous refusals** → default rate: exceeds 30%
+
+**Business Implication:** 
+A client's past refusal count is a strong indicator of future default risk. 
+This feature alone contributes significantly to the model's predictive power.
+
+## Average Annuity amount by Contract_Status
 ![Annuity by Contract_status](images-visualization/Status-Annuity.png)
-*Visualization confirming that clients with more past refusals have higher default rates.*
+
+**Observations:**
+- **Approved** loans have the highest average annuity (~14,500)
+- **Canceled** loans show the lowest average annuity (~3,000)
+- **Refused** loans have a moderate average annuity (~8,000)
+- **Unused offer** loans fall between Approved and Refused (~10,000)
+
+**Business Implication:**
+Clients who receive loan approval tend to request (or are granted) higher annuity amounts, reflecting stronger perceived repayment capacity. Conversely, applications with very low annuity are more likely to be canceled, possibly due to insufficient loan size relative to borrower needs. This pattern aligns with standard credit risk logic: higher-risk applicants either request smaller loans or are rejected outright.
 
 ## How to Run
 1. Clone this repo.
