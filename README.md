@@ -28,7 +28,7 @@ It developed an XGBoost model for credit default prediction, achieving a validat
 - Tableau (for visualization, see `/images` folder)
 
 ## Tableau chart - Key Insights from Feature Engineering
-## Default Rate by Number of Previous Refusals
+### Default Rate by Number of Previous Refusals
 ![Annuity by Contract_status](images-visualization/Refusal-Default.png)
 **Observations:**
 - Clients with **0 previous refusals** → default rate: ~8%
@@ -40,7 +40,7 @@ It developed an XGBoost model for credit default prediction, achieving a validat
 A client's past refusal count is a strong indicator of future default risk. 
 This feature alone contributes significantly to the model's predictive power.
 
-## Average Annuity amount by Contract_Status
+### Average Annuity amount by Contract_Status
 ![Annuity by Contract_status](images-visualization/Status-Annuity.png)
 
 **Observations:**
