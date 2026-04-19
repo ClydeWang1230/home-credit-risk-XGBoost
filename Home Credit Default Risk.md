@@ -27,6 +27,11 @@ It developed an XGBoost model for credit default prediction, achieving a validat
 - SQL (for data extraction queries)
 - Tableau (for visualization, see `/images` folder)
 
+## Tableau Dashboard
+- ![Default Rate by Refusal Count](images/Refusal-Default.png)
+![Default Rate by Refusal Count](Status-Annuity.png)
+*Visualization confirming that clients with more past refusals have higher default rates.*
+
 ## How to Run
 1. Clone this repo.
 2. Run the notebook in Kaggle or Jupyter.
