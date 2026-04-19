@@ -11,8 +11,8 @@ It developed an XGBoost model for credit default prediction, achieving a validat
 ## Key Files
 - `home_credit_xgboost.ipynb`: The main Python notebook with EDA, feature engineering, and model training.
 - `submission.csv`: Final prediction file.
-- `sql_queries/`: Feature extraction queries (⏳ in progress)
-- `tableau_dashboard.png`: Risk visualization (⏳ in progress)
+- `sql_queries/`: Feature extraction queries
+- `tableau_dashboard.png`: Risk visualization 
 
 ## Results
 - **Public Leaderboard Score**: `0.74165`
@@ -52,6 +52,8 @@ This feature alone contributes significantly to the model's predictive power.
 **Business Implication:**
 Clients who receive loan approval tend to request (or are granted) higher annuity amounts, reflecting stronger perceived repayment capacity. Conversely, applications with very low annuity are more likely to be canceled, possibly due to insufficient loan size relative to borrower needs. This pattern aligns with standard credit risk logic: higher-risk applicants either request smaller loans or are rejected outright.
 
+## Result
+Private Score AUC 0.7612 On Kaggle!
 ## How to Run
 1. Clone this repo.
 2. Run the notebook in Kaggle or Jupyter.
