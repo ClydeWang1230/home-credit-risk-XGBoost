@@ -1,59 +1,105 @@
-# home-credit-risk-XGBoost
-It developed an XGBoost model for credit default prediction, achieving a validation AUC of 0.7626 after applying early stopping.
+🧠 Home Credit Risk Modeling Pipeline (XGBoost)
+📌 Project Overview
 
-# Home Credit Default Risk Prediction
+This project builds an end-to-end credit risk modeling pipeline using the Home Credit dataset.
 
-## Project Overview
-- **Goal**: Predict if a loan applicant will default.
-- **Data**: Home Credit dataset from Kaggle.
-- **My Approach**: Built an XGBoost model with two new features from previous application data.
+It simulates how financial institutions assess loan default risk by combining:
 
-## Key Files
-- `home_credit_xgboost.ipynb`: The main Python notebook with EDA, feature engineering, and model training.
-- `submission.csv`: Final prediction file.
-- `sql_queries/`: Feature extraction queries
-- `tableau_dashboard.png`: Risk visualization 
+Data ingestion & storage
+Data modeling & feature engineering
+Machine learning (XGBoost)
+Risk scoring output & visualization
 
-## Results
-- **Public Leaderboard Score**: `0.74165`
-- **Private Leaderboard Score**: `0.74439`
+The goal is to replicate a simplified real-world risk analytics workflow rather than a standalone modeling task.
 
-## Key Features Engineered
-- `n_prev_refusals`: How many times a client was previously rejected.
-- `avg_annuity_prev`: Client's average historical loan annuity.
+🏗️ Pipeline Architecture
+Raw Data (Kaggle)
+   ↓
+Data Storage (Azure Blob / Local Staging)
+   ↓
+Data Modeling (Relational Structure Simulation)
+   ↓
+Data Processing & Feature Engineering (Python / SQL)
+   ↓
+Model Training (XGBoost)
+   ↓
+Risk Scoring Output
+   ↓
+Visualization (Tableau)
 
-## Tech Stack
-- Python (pandas, XGBoost)
-- SQL (for data extraction queries)
-- Tableau (for visualization, see `/images` folder)
+📂 Data Architecture (Simulated Data Warehouse)
 
-## Tableau chart - Key Insights from Feature Engineering
-### Default Rate by Number of Previous Refusals
-![Annuity by Contract_status](images-visualization/Refusal-Default.png)
-**Observations:**
-- Clients with **0 previous refusals** → default rate: ~8%
-- Clients with **1 previous refusal** → default rate: ~15% (nearly doubled)
-- Clients with **2 previous refusals** → default rate: ~20%
-- Clients with **5+ previous refusals** → default rate: exceeds 30%
+To reflect real-world financial data systems, the dataset is structured into a relational format:
 
-**Business Implication:** 
-A client's past refusal count is a strong indicator of future default risk. 
-This feature alone contributes significantly to the model's predictive power.
+Core Tables
+application → customer-level information (main table)
+bureau → external credit history
+previous_application → past loan applications
+Data Modeling Approach
+Designed a simplified star-schema-like structure
+Performed table joins and aggregations to create features
+Built customer-level features such as:
+Credit history length
+Previous default signals
+Loan behavior patterns
 
-### Average Annuity amount by Contract_Status
-![Annuity by Contract_status](images-visualization/Status-Annuity.png)
+This step simulates how raw financial data is transformed into model-ready datasets in enterprise environments.
 
-**Observations:**
-- **Approved** loans have the highest average annuity (~14,500)
-- **Canceled** loans show the lowest average annuity (~3,000)
-- **Refused** loans have a moderate average annuity (~8,000)
-- **Unused offer** loans fall between Approved and Refused (~10,000)
+💾 Data Storage & Processing
+Data Storage
+Raw data stored in:
+Local staging (/data/raw)
+(Planned) Azure Blob Storage
+Data Layers
+/data
+   /raw          → original data
+   /processed    → cleaned data
+   /features     → model-ready dataset
+Processing
+Python (Pandas, NumPy)
+SQL-style transformations (joins, aggregations)
+Missing value handling & feature scaling
+⚙️ Feature Engineering
 
-**Business Implication:**
-Clients who receive loan approval tend to request (or are granted) higher annuity amounts, reflecting stronger perceived repayment capacity. Conversely, applications with very low annuity are more likely to be canceled, possibly due to insufficient loan size relative to borrower needs. This pattern aligns with standard credit risk logic: higher-risk applicants either request smaller loans or are rejected outright.
+Key feature engineering techniques:
+
+Aggregation of bureau and previous applications
+Ratio features (e.g., debt/income)
+Temporal features (credit history length)
+Handling categorical variables (encoding)
+
+🤖 Model Development
+Model: XGBoost
+Objective: Binary classification (default / non-default)
+Techniques:
+Cross-validation
+Feature importance analysis
+
+📊 Output & Business Interpretation
+Risk Scoring
+Output: Probability of default (PD)
+Customers are ranked based on risk level
+Visualization
+Built dashboard using Tableau:
+Risk distribution
+Feature importance
+Customer segmentation
+
+🧩 Key Highlights
+Built a complete ML pipeline, not just a model
+Simulated real-world financial data flow
+Applied data modeling concepts (relational + aggregation)
+Focused on business interpretability (risk scoring)
+
+🚀 Future Improvements
+Deploy pipeline using Azure (Blob + Data Factory)
+Add model monitoring
+Automate pipeline execution
+Improve feature engineering with time-series logic
 
 ## Result
 Private Score AUC 0.7612 On Kaggle!
+
 ## How to Run
 1. Clone this repo.
 2. Run the notebook in Kaggle or Jupyter.
