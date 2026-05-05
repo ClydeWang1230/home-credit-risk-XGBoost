@@ -1,105 +1,193 @@
-🧠 Home Credit Risk Modeling Pipeline (XGBoost)
-📌 Project Overview
+# Credit Risk Modeling (Kaggle + Azure Pipeline)
 
-This project builds an end-to-end credit risk modeling pipeline using the Home Credit dataset.
+## 📌 Overview
 
-It simulates how financial institutions assess loan default risk by combining:
+This project started as a **Kaggle-based credit risk modeling task** and was later extended into a **production-style ML pipeline with Azure integration**.
 
-Data ingestion & storage
-Data modeling & feature engineering
-Machine learning (XGBoost)
-Risk scoring output & visualization
+It demonstrates both:
 
-The goal is to replicate a simplified real-world risk analytics workflow rather than a standalone modeling task.
+* 📊 **Data analysis & modeling skills (Kaggle workflow)**
+* ⚙️ **Data engineering & pipeline design (production workflow)**
 
-🏗️ Pipeline Architecture
-Raw Data (Kaggle)
-   ↓
-Data Storage (Azure Blob / Local Staging)
-   ↓
-Data Modeling (Relational Structure Simulation)
-   ↓
-Data Processing & Feature Engineering (Python / SQL)
-   ↓
-Model Training (XGBoost)
-   ↓
-Risk Scoring Output
-   ↓
-Visualization (Tableau)
+---
 
-📂 Data Architecture (Simulated Data Warehouse)
+# 🧠 Part 1: Data Analysis & Modeling (Kaggle)
 
-To reflect real-world financial data systems, the dataset is structured into a relational format:
+## 🔍 Dataset
 
-Core Tables
-application → customer-level information (main table)
-bureau → external credit history
-previous_application → past loan applications
-Data Modeling Approach
-Designed a simplified star-schema-like structure
-Performed table joins and aggregations to create features
-Built customer-level features such as:
-Credit history length
-Previous default signals
-Loan behavior patterns
+* Home Credit Default Risk dataset
+* Multiple relational tables:
 
-This step simulates how raw financial data is transformed into model-ready datasets in enterprise environments.
+  * application_train
+  * bureau
+  * previous_application
+  * etc.
 
-💾 Data Storage & Processing
-Data Storage
-Raw data stored in:
-Local staging (/data/raw)
-(Planned) Azure Blob Storage
-Data Layers
-/data
-   /raw          → original data
-   /processed    → cleaned data
-   /features     → model-ready dataset
-Processing
-Python (Pandas, NumPy)
-SQL-style transformations (joins, aggregations)
-Missing value handling & feature scaling
-⚙️ Feature Engineering
+---
 
-Key feature engineering techniques:
+## 📊 Exploratory Data Analysis
 
-Aggregation of bureau and previous applications
-Ratio features (e.g., debt/income)
-Temporal features (credit history length)
-Handling categorical variables (encoding)
+* Distribution of target variable
+* Income vs default patterns
+* Credit behavior insights
 
-🤖 Model Development
-Model: XGBoost
-Objective: Binary classification (default / non-default)
-Techniques:
-Cross-validation
-Feature importance analysis
+---
 
-📊 Output & Business Interpretation
-Risk Scoring
-Output: Probability of default (PD)
-Customers are ranked based on risk level
-Visualization
-Built dashboard using Tableau:
-Risk distribution
-Feature importance
-Customer segmentation
+## 🧮 Feature Engineering
 
-🧩 Key Highlights
-Built a complete ML pipeline, not just a model
-Simulated real-world financial data flow
-Applied data modeling concepts (relational + aggregation)
-Focused on business interpretability (risk scoring)
+* Aggregations from relational tables:
 
-🚀 Future Improvements
-Deploy pipeline using Azure (Blob + Data Factory)
-Add model monitoring
-Automate pipeline execution
-Improve feature engineering with time-series logic
+  * `previous_application`
+  * `bureau`
+* Handling missing values
+* Encoding categorical variables
 
-## Result
-Private Score AUC 0.7612 On Kaggle!
+---
 
-## How to Run
-1. Clone this repo.
-2. Run the notebook in Kaggle or Jupyter.
+## 🧠 Modeling
+
+* Model: XGBoost
+* Evaluation: AUC
+* Feature importance analysis
+
+---
+
+## 🗄️ SQL Usage
+
+* Data extraction and joins
+* Feature aggregation logic
+
+---
+
+## 📈 Tableau Dashboard
+
+* Visualized credit risk patterns
+* Business-oriented insights
+
+---
+
+# ⚙️ Part 2: Production-Style Pipeline (Azure)
+
+## 🚀 Motivation
+
+Transform notebook-based workflow into a **scalable and reusable pipeline**
+
+---
+
+## 🏗️ Architecture
+
+```id="7a3vkl"
+Local Python (PyCharm)
+        ↓
+Azure Blob Storage
+        ↓
+Feature Engineering
+        ↓
+Model Training
+        ↓
+Prediction Output
+```
+
+---
+
+## 🧱 Project Structure
+
+```id="4n0m2p"
+project/
+│
+├── src/
+│   ├── data_ingestion.py
+│   ├── feature_engineering.py
+│   ├── model.py
+│   └── config.py
+│
+├── main.py
+├── .env
+└── README.md
+```
+
+---
+
+## 🔄 Pipeline Steps
+
+### 1. Data Ingestion
+
+* Load raw data from Azure Blob
+
+### 2. Feature Engineering
+
+* Example (bureau):
+
+```python id="oj9k6g"
+bureau.groupby("SK_ID_CURR").agg({
+    "SK_ID_BUREAU": "count",
+    "AMT_CREDIT_SUM": "mean",
+    "AMT_CREDIT_SUM_OVERDUE": "sum"
+})
+```
+
+---
+
+### 3. Model Training
+
+* Merge features with main dataset
+* Train XGBoost model
+
+---
+
+### 4. Prediction & Output
+
+* Generate risk scores
+* Save & upload to Azure Blob
+
+---
+
+## 🔐 Environment Setup
+
+```id="j1k7xn"
+AZURE_STORAGE_ACCOUNT=your_account
+AZURE_STORAGE_KEY=your_key
+```
+
+---
+
+## ▶️ Run
+
+```bash id="1ybhsl"
+python main.py
+```
+
+---
+
+# 💡 Key Highlights
+
+* Combined **Kaggle modeling + real-world pipeline design**
+* Integrated **Azure cloud storage**
+* Built **modular and reusable code structure**
+* Demonstrated both **analysis and engineering skills**
+
+---
+
+# 🎯 Future Improvements
+
+* Multi-table feature pipeline
+* Model deployment (API)
+* Automated pipeline scheduling
+
+---
+
+# 👨‍💻 Author
+
+Clyde Wang
+
+This project demonstrates my transition from:
+- Notebook-based experimentation (Kaggle)
+- To production-style machine learning pipeline with Azure
+
+Focus areas:
+- Credit risk modeling
+- Feature engineering on relational datasets
+- Cloud-based data pipeline design
+
+---
+
