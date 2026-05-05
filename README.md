@@ -102,7 +102,7 @@ project/
 │   └── config.py
 │
 ├── main.py
-├── .env
+├── .env.example
 └── README.md
 ```
 
@@ -145,6 +145,8 @@ bureau.groupby("SK_ID_CURR").agg({
 ## 🔐 Environment Setup
 
 ```id="j1k7xn"
+Create a local `.env` file based on `env.example`:
+
 AZURE_STORAGE_ACCOUNT=your_account
 AZURE_STORAGE_KEY=your_key
 ```
