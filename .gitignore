@@ -1,0 +1,22 @@
+# Python virtual environment
+.venv/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Local environment variables / secrets
+.env
+
+# Raw data files - not uploaded to GitHub
+data/raw/
+
+# Optional generated outputs
+outputs/*.csv
+
+# IDE settings
+.idea/
+*.iml
+
+# Word documents
+*.docx
