@@ -1,5 +1,21 @@
 # Project Roadmap: Home Credit Risk XGBoost
 
+## Progress Log
+
+### 2026-05-28
+
+- Migrated previous_application feature engineering logic into `src/feature_engineering.py`.
+- Added `build_previous_application_features()`.
+- Integrated `previous_application.csv` from Azure Blob into `main.py`.
+- Validated merge safety:
+  - `previous_application_features` duplicated `SK_ID_CURR` count = 0
+  - `application_train` rows before merge = 307,511
+  - `application_train` rows after merge = 307,511
+- Exported and uploaded:
+  - `features/previous_application_features.csv`
+  - `outputs/risk_scores.csv`
+- Pipeline completed successfully with exit code 0.
+
 This 8-week roadmap upgrades the existing Home Credit Risk XGBoost project from a Kaggle-style prototype into a professional portfolio project for fintech, banking analytics, risk analytics, and data science roles.
 
 The project already includes dataset exploration, feature engineering, an XGBoost model with validation AUC around 0.76, SQL / Tableau / Azure Blob Storage elements, and early modular Python pipeline work. The roadmap focuses on refactoring, professionalizing, extending, and packaging the existing work rather than rebuilding the project from zero.
