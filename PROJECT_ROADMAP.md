@@ -15,6 +15,7 @@
   - `features/previous_application_features.csv`
   - `outputs/risk_scores.csv`
 - Pipeline completed successfully with exit code 0.
+- Current validation AUC: 0.7538
 
 This 8-week roadmap upgrades the existing Home Credit Risk XGBoost project from a Kaggle-style prototype into a professional portfolio project for fintech, banking analytics, risk analytics, and data science roles.
 
