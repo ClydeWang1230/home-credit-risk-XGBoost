@@ -1,0 +1,28 @@
+{
+  "model_name": "XGBClassifier",
+  "validation_auc": 0.7552909080889085,
+  "data_source": "local",
+  "application_train_shape": [
+    307511,
+    122
+  ],
+  "bureau_shape": [
+    1716428,
+    17
+  ],
+  "previous_application_shape": [
+    1670214,
+    37
+  ],
+  "bureau_features_shape": [
+    305811,
+    5
+  ],
+  "previous_application_features_shape": [
+    338857,
+    7
+  ],
+  "duplicate_sk_id_curr_previous_application": 0,
+  "rows_before_merge": 307511,
+  "rows_after_merge": 307511
+}
