@@ -13,6 +13,7 @@ data/raw/
 
 # Optional generated outputs
 outputs/*.csv
+outputs/models/*.pkl
 
 # IDE settings
 .idea/
