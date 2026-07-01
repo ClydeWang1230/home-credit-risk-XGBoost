@@ -8,10 +8,14 @@ Added:
 - `days_decision_mean`
 - `last_application_days`
 
-Result:
+Validation:
 - previous_application_features increased from 10 to 12 columns.
+- duplicate SK_ID_CURR count: 0
+- application_train row count preserved: 307511 → 307511
+
+Result:
 - Validation AUC improved slightly from 0.7576 to 0.7577.
-- Merge-safe validation passed.
+- Time-based features provided a smaller marginal lift than amount-based features.
 - 
 ## Batch 2A - Amount Features (1. July)
 
