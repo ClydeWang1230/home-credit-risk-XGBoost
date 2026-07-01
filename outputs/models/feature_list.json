@@ -111,6 +111,9 @@
   "n_prev_approved",
   "n_prev_refusals",
   "avg_annuity_prev",
+  "avg_credit_prev",
+  "max_credit_prev",
+  "avg_down_payment_prev",
   "prev_approval_rate",
   "prev_refusal_rate"
 ]

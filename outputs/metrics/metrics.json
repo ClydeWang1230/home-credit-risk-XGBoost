@@ -1,6 +1,6 @@
 {
   "model_name": "XGBClassifier",
-  "validation_auc": 0.7552909080889085,
+  "validation_auc": 0.7576192782068487,
   "data_source": "local",
   "application_train_shape": [
     307511,
@@ -20,7 +20,7 @@
   ],
   "previous_application_features_shape": [
     338857,
-    7
+    10
   ],
   "duplicate_sk_id_curr_previous_application": 0,
   "rows_before_merge": 307511,

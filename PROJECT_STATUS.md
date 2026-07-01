@@ -16,26 +16,36 @@ The main pipeline can now run successfully in local mode.
 - bureau: (1716428, 17)
 - previous_application: (1670214, 37)
 
-## Feature Engineering
-- bureau_features shape: (305811, 5)
-- previous_application_features shape: (338857, 7)
-- previous_application duplicate SK_ID_CURR count: 0
+## Batch 2A Result - previous_application Amount Features
 
-## Merge Validation
-- application_train rows before previous_application feature merge: 307511
-- application_train rows after previous_application feature merge: 307511
-- Merge-safe validation passed.
+Added amount-based previous application features:
+- `avg_credit_prev`: average historical credit amount from previous applications.
+- `max_credit_prev`: maximum historical credit amount from previous applications.
+- `avg_down_payment_prev`: average historical down payment amount from previous applications.
+
+Validation:
+- previous_application_features shape: (338857, 10)
+- duplicate SK_ID_CURR count: 0
+- application_train rows before merge: 307511
+- application_train rows after merge: 307511
+
+Model Result:
+- Baseline AUC before Batch 2A: 0.7553
+- AUC after Batch 2A: 0.7576
+- AUC improvement: +0.0023
+
 
 ## Model Result
 - Model: XGBClassifier
-- Validation AUC: 0.7553
-- Full AUC value: 0.7552909080889085
+- Baseline AUC before Batch 2A: 0.7553
+- AUC after Batch 2A: 0.7576
+- AUC improvement: +0.0023
 
 ## Artifacts Generated
 - `outputs/metrics/metrics.json`
-- `outputs/models/model.pkl`
+- `outputs/models/model.pkl` local only, ignored by Git
 - `outputs/models/feature_list.json`
-- `outputs/risk_scores.csv`
+- `outputs/risk_scores.csv` local only, ignored by Git
 
 ## Notes
 The project now supports local-first reproducible execution. This improves robustness because the pipeline no longer depends on Azure Blob Storage being available.
@@ -44,8 +54,13 @@ The project now supports local-first reproducible execution. This improves robus
 Completed local-first reproducible execution and saved baseline model artifacts.
 
 ## Next Steps
-1. Standardize output folders.
-2. Save metrics to `outputs/metrics/metrics.json`.
-3. Save model artifact to `outputs/models/model.pkl`.
-4. Save feature list to `outputs/models/feature_list.json`.
-5. Continue previous_application Batch 2 feature expansion.
+1. Confirm `.gitignore` excludes generated model artifacts such as `outputs/models/*.pkl`.
+2. Review current `build_previous_application_features()` logic.
+3. Document the current previous_application baseline features.
+4. Continue previous_application Batch 2 feature expansion:
+   - `avg_credit_prev`
+   - `max_credit_prev`
+   - `avg_down_payment_prev`
+   - `days_decision_mean`
+   - `last_application_days`
+5. Compare new AUC against the current baseline: 0.7553.
