@@ -114,6 +114,8 @@
   "avg_credit_prev",
   "max_credit_prev",
   "avg_down_payment_prev",
+  "days_decision_mean",
+  "last_application_days",
   "prev_approval_rate",
   "prev_refusal_rate"
 ]

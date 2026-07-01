@@ -85,6 +85,22 @@ def build_previous_application_features(previous_application):
         .reset_index(name="avg_down_payment_prev")
     )
 
+    # Business signal: average decision timing summarizes application recency history.
+    average_days_decision = (
+        previous_application
+        .groupby("SK_ID_CURR")["DAYS_DECISION"]
+        .mean()
+        .reset_index(name="days_decision_mean")
+    )
+
+    # Business signal: max DAYS_DECISION is closest to 0, marking the latest application.
+    last_application_days = (
+        previous_application
+        .groupby("SK_ID_CURR")["DAYS_DECISION"]
+        .max()
+        .reset_index(name="last_application_days")
+    )
+
     previous_application_features = (
         previous_application[["SK_ID_CURR"]]
         .drop_duplicates()
@@ -95,6 +111,8 @@ def build_previous_application_features(previous_application):
         .merge(average_credit, on="SK_ID_CURR", how="left")
         .merge(maximum_credit, on="SK_ID_CURR", how="left")
         .merge(average_down_payment, on="SK_ID_CURR", how="left")
+        .merge(average_days_decision, on="SK_ID_CURR", how="left")
+        .merge(last_application_days, on="SK_ID_CURR", how="left")
     )
     previous_application_features["n_prev_applications"] = (
         previous_application_features["n_prev_applications"].fillna(0).astype(int)
@@ -114,9 +132,21 @@ def build_previous_application_features(previous_application):
         / previous_application_features["n_prev_applications"]
     ).fillna(0)
     previous_application_features[
-        ["avg_credit_prev", "max_credit_prev", "avg_down_payment_prev"]
+        [
+            "avg_credit_prev",
+            "max_credit_prev",
+            "avg_down_payment_prev",
+            "days_decision_mean",
+            "last_application_days",
+        ]
     ] = previous_application_features[
-        ["avg_credit_prev", "max_credit_prev", "avg_down_payment_prev"]
+        [
+            "avg_credit_prev",
+            "max_credit_prev",
+            "avg_down_payment_prev",
+            "days_decision_mean",
+            "last_application_days",
+        ]
     ].fillna(0)
 
     return previous_application_features

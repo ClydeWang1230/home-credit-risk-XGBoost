@@ -1,5 +1,18 @@
 # Feature Expansion Plan
 
+## Batch 2B - Time Features
+
+Status: Completed
+
+Added:
+- `days_decision_mean`
+- `last_application_days`
+
+Result:
+- previous_application_features increased from 10 to 12 columns.
+- Validation AUC improved slightly from 0.7576 to 0.7577.
+- Merge-safe validation passed.
+- 
 ## Batch 2A - Amount Features (1. July)
 
 Status: Completed

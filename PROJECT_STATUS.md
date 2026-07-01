@@ -3,6 +3,26 @@
 ## Current Stage
 Week 1 - Pipeline Clean & Reproducibility
 
+## Latest Update 
+## Batch 2B Result - previous_application Time Features
+
+Added time-based previous application features:
+- `days_decision_mean`: average historical decision timing from previous applications.
+- `last_application_days`: most recent previous application timing, calculated as max `DAYS_DECISION` because values are negative and closer to 0 means more recent.
+
+Validation:
+- previous_application_features shape: (338857, 12)
+- duplicate SK_ID_CURR count: 0
+- application_train rows before merge: 307511
+- application_train rows after merge: 307511
+
+Model Result:
+- Baseline AUC before Batch 2A: 0.7553
+- AUC after Batch 2A amount features: 0.7576
+- AUC after Batch 2B time features: 0.7577
+- Incremental improvement from Batch 2B: +0.0001
+- Total improvement from baseline: +0.0024
+- 
 ## Current Pipeline Status
 The main pipeline can now run successfully in local mode.
 
@@ -63,4 +83,4 @@ Completed local-first reproducible execution and saved baseline model artifacts.
    - `avg_down_payment_prev`
    - `days_decision_mean`
    - `last_application_days`
-5. Compare new AUC against the current baseline: 0.7553.
+5. Compare new AUC against the original 1.0 baseline: 0.7553.
