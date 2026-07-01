@@ -74,13 +74,9 @@ The project now supports local-first reproducible execution. This improves robus
 Completed local-first reproducible execution and saved baseline model artifacts.
 
 ## Next Steps
-1. Confirm `.gitignore` excludes generated model artifacts such as `outputs/models/*.pkl`.
-2. Review current `build_previous_application_features()` logic.
-3. Document the current previous_application baseline features.
-4. Continue previous_application Batch 2 feature expansion:
-   - `avg_credit_prev`
-   - `max_credit_prev`
-   - `avg_down_payment_prev`
-   - `days_decision_mean`
-   - `last_application_days`
+
+Build feature importance/explanation report:
+- Export 'outputs/reports/feature_importance.csv'
+- Include 'feature', 'importance' , 'business_category' , 'business_interpretation'
+- Check whether new `previous_application` features appear in top features
 5. Compare new AUC against the original 1.0 baseline: 0.7553.
