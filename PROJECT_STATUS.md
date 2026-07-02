@@ -4,6 +4,11 @@
 Week 1 - Pipeline Clean & Reproducibility
 
 ## Latest Update 
+Key observations from feature importance:
+- `credit_goods_ratio` ranked 7th, suggesting that financing coverage between credit amount and goods price is a meaningful predictive signal.
+- `credit_annuity_ratio` ranked 13th, suggesting that the relationship between loan size and scheduled repayment amount contributes to risk prediction.
+- This supports the strong AUC improvement from Batch 3A, where application-level affordability and exposure features improved AUC from 0.7577 to 0.7645.
+
 ## Batch 3A Result - application_train Affordability and Exposure Features
 
 Added application-level ratio features:

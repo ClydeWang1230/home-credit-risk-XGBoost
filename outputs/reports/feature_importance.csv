@@ -5,13 +5,13 @@ FLAG_EMP_PHONE,0.03229967,3,other,Model input feature retained for predictive ra
 FLAG_DOCUMENT_3,0.031837065,4,other,Model input feature retained for predictive ranking and reviewed through feature importance.
 prev_refusal_rate,0.030159405,5,previous_application_behavior,"Share of previous applications refused, summarizing historical rejection frequency."
 EXT_SOURCE_1,0.027608488,6,external_credit_score,External source score feature that may summarize third-party credit risk signals.
-credit_goods_ratio,0.02757198,7,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+credit_goods_ratio,0.02757198,7,affordability_and_exposure,"Credit amount relative to goods price, approximating financing coverage and borrower self-funding capacity."
 APARTMENTS_MEDI,0.02699779,8,other,Model input feature retained for predictive ranking and reviewed through feature importance.
 FLOORSMAX_AVG,0.023608787,9,other,Model input feature retained for predictive ranking and reviewed through feature importance.
 DAYS_BIRTH,0.02239856,10,demographic_and_employment,Demographic or employment timing feature used as a borrower profile signal.
 avg_down_payment_prev,0.021709906,11,previous_application_behavior,"Average previous down payment, a proxy for borrower liquidity in prior applications."
 AMT_REQ_CREDIT_BUREAU_HOUR,0.021593532,12,external_bureau_history,External bureau history feature summarizing prior or active credit records.
-credit_annuity_ratio,0.020984137,13,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+credit_annuity_ratio,0.020984137,13,affordability_and_exposure,"Credit amount relative to scheduled repayment amount, approximating repayment horizon or amortization pressure."
 DAYS_EMPLOYED,0.01697954,14,demographic_and_employment,Demographic or employment timing feature used as a borrower profile signal.
 TOTALAREA_MODE,0.016621718,15,other,Model input feature retained for predictive ranking and reviewed through feature importance.
 AMT_GOODS_PRICE,0.015652366,16,affordability_and_exposure,"Amount-based feature related to borrower affordability, income, credit size, or exposure."
@@ -38,13 +38,13 @@ n_prev_approved,0.008292764,36,previous_application_behavior,"Number of previous
 avg_annuity_prev,0.008077535,37,previous_application_behavior,"Average previous annuity amount, approximating prior repayment burden."
 avg_credit_sum,0.008026924,38,other,Model input feature retained for predictive ranking and reviewed through feature importance.
 max_credit_prev,0.007964284,39,previous_application_behavior,"Maximum previous credit amount, capturing peak historical credit exposure."
-annuity_income_ratio,0.007962305,40,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+annuity_income_ratio,0.007962305,40,affordability_and_exposure,"Scheduled repayment amount relative to borrower income, capturing repayment burden."
 n_prev_refusals,0.0076866923,41,previous_application_behavior,"Number of previously refused applications, a direct signal of historical credit rejection."
 DAYS_ID_PUBLISH,0.0072806966,42,other,Model input feature retained for predictive ranking and reviewed through feature importance.
 YEARS_BEGINEXPLUATATION_MODE,0.007223977,43,other,Model input feature retained for predictive ranking and reviewed through feature importance.
 FLOORSMAX_MEDI,0.0070160925,44,other,Model input feature retained for predictive ranking and reviewed through feature importance.
 avg_credit_prev,0.0066726175,45,previous_application_behavior,"Average previous credit amount, reflecting typical historical borrowing size."
-credit_income_ratio,0.0064758705,46,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+credit_income_ratio,0.0064758705,46,affordability_and_exposure,"Credit amount relative to borrower income, capturing loan-to-income pressure."
 YEARS_BEGINEXPLUATATION_AVG,0.0059974142,47,other,Model input feature retained for predictive ranking and reviewed through feature importance.
 bureau_record_count,0.005970897,48,external_bureau_history,External bureau history feature summarizing prior or active credit records.
 CNT_CHILDREN,0.005624949,49,other,Model input feature retained for predictive ranking and reviewed through feature importance.
@@ -62,7 +62,7 @@ last_application_days,0.0048365635,60,previous_application_behavior,Most recent 
 OBS_60_CNT_SOCIAL_CIRCLE,0.0047668624,61,other,Model input feature retained for predictive ranking and reviewed through feature importance.
 NONLIVINGAREA_MEDI,0.0047450312,62,other,Model input feature retained for predictive ranking and reviewed through feature importance.
 APARTMENTS_MODE,0.004698148,63,other,Model input feature retained for predictive ranking and reviewed through feature importance.
-income_per_family_member,0.0046711056,64,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+income_per_family_member,0.0046711056,64,affordability_and_exposure,"Borrower income adjusted by family size, capturing household income capacity."
 FLAG_DOCUMENT_21,0.0046647736,65,other,Model input feature retained for predictive ranking and reviewed through feature importance.
 DAYS_LAST_PHONE_CHANGE,0.0046569686,66,other,Model input feature retained for predictive ranking and reviewed through feature importance.
 AMT_INCOME_TOTAL,0.0045179594,67,affordability_and_exposure,"Amount-based feature related to borrower affordability, income, credit size, or exposure."

@@ -16,7 +16,6 @@ from src.model import train_model, predict
 
 DATA_SOURCE = os.getenv("DATA_SOURCE", "local").lower()
 
-
 def load_csv_from_blob(client, container_name, blob_name):
     blob_client = client.get_blob_client(
         container=container_name,
@@ -24,7 +23,6 @@ def load_csv_from_blob(client, container_name, blob_name):
     )
     data = blob_client.download_blob().readall()
     return pd.read_csv(BytesIO(data))
-
 
 def upload_file_to_blob(client, container_name, local_file_path, blob_name):
     container_client = client.get_container_client(container_name)
@@ -45,6 +43,13 @@ def get_business_category(feature):
     if any(
         keyword in feature_upper
         for keyword in ["AMT_CREDIT", "AMT_ANNUITY", "AMT_INCOME", "AMT_GOODS"]
+    ):
+        return "affordability_and_exposure"
+    if feature == "income_per_family_member":
+        return "affordability_and_exposure"
+    if "ratio" in feature_lower and any(
+        keyword in feature_lower
+        for keyword in ["credit", "annuity", "goods", "income", "family"]
     ):
         return "affordability_and_exposure"
     if any(
@@ -79,6 +84,11 @@ def get_business_interpretation(feature, business_category):
         "prev_approval_rate": "Share of previous applications approved, summarizing historical lender acceptance.",
         "prev_refusal_rate": "Share of previous applications refused, summarizing historical rejection frequency.",
         "avg_annuity_prev": "Average previous annuity amount, approximating prior repayment burden.",
+        "credit_income_ratio": "Credit amount relative to borrower income, capturing loan-to-income pressure.",
+        "annuity_income_ratio": "Scheduled repayment amount relative to borrower income, capturing repayment burden.",
+        "credit_annuity_ratio": "Credit amount relative to scheduled repayment amount, approximating repayment horizon or amortization pressure.",
+        "credit_goods_ratio": "Credit amount relative to goods price, approximating financing coverage and borrower self-funding capacity.",
+        "income_per_family_member": "Borrower income adjusted by family size, capturing household income capacity.",
     }
     if feature in custom_interpretations:
         return custom_interpretations[feature]
