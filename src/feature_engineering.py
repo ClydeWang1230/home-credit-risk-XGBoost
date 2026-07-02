@@ -1,3 +1,6 @@
+import numpy as np
+
+
 def build_bureau_features(bureau):
     bureau_features = bureau.groupby("SK_ID_CURR").agg({
         "SK_ID_BUREAU": "count",
@@ -14,6 +17,55 @@ def build_bureau_features(bureau):
     }, inplace=True)
 
     return bureau_features
+
+
+def add_application_train_ratio_features(app_train):
+    app_train_with_ratios = app_train.copy()
+
+    # Business signal: credit size relative to income indicates exposure burden.
+    app_train_with_ratios["credit_income_ratio"] = (
+        app_train_with_ratios["AMT_CREDIT"]
+        / app_train_with_ratios["AMT_INCOME_TOTAL"]
+    )
+
+    # Business signal: annuity relative to income approximates repayment pressure.
+    app_train_with_ratios["annuity_income_ratio"] = (
+        app_train_with_ratios["AMT_ANNUITY"]
+        / app_train_with_ratios["AMT_INCOME_TOTAL"]
+    )
+
+    # Business signal: credit-to-annuity ratio approximates loan repayment duration.
+    app_train_with_ratios["credit_annuity_ratio"] = (
+        app_train_with_ratios["AMT_CREDIT"]
+        / app_train_with_ratios["AMT_ANNUITY"]
+    )
+
+    # Business signal: credit relative to goods price indicates financed exposure.
+    app_train_with_ratios["credit_goods_ratio"] = (
+        app_train_with_ratios["AMT_CREDIT"]
+        / app_train_with_ratios["AMT_GOODS_PRICE"]
+    )
+
+    # Business signal: income per family member approximates household capacity.
+    app_train_with_ratios["income_per_family_member"] = (
+        app_train_with_ratios["AMT_INCOME_TOTAL"]
+        / app_train_with_ratios["CNT_FAM_MEMBERS"]
+    )
+
+    ratio_features = [
+        "credit_income_ratio",
+        "annuity_income_ratio",
+        "credit_annuity_ratio",
+        "credit_goods_ratio",
+        "income_per_family_member",
+    ]
+    app_train_with_ratios[ratio_features] = (
+        app_train_with_ratios[ratio_features]
+        .replace([np.inf, -np.inf], np.nan)
+        .fillna(0)
+    )
+
+    return app_train_with_ratios
 
 
 def build_previous_application_features(previous_application):

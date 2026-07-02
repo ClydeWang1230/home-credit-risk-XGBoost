@@ -7,6 +7,7 @@ from io import BytesIO
 from src.config import ACCOUNT_NAME, ACCOUNT_KEY, CONTAINER_NAME
 from src.data_ingestion import create_blob_client
 from src.feature_engineering import (
+    add_application_train_ratio_features,
     build_bureau_features,
     build_previous_application_features,
 )
@@ -119,6 +120,9 @@ def main():
     print("Loaded application_train shape:", app_train.shape)
     print("Loaded bureau shape:", bureau.shape)
     print("Loaded previous_application shape:", previous_application.shape)
+    print("app_train shape before ratio features:", app_train.shape)
+    app_train = add_application_train_ratio_features(app_train)
+    print("app_train shape after ratio features:", app_train.shape)
     application_train_shape = app_train.shape
     bureau_shape = bureau.shape
     previous_application_shape = previous_application.shape

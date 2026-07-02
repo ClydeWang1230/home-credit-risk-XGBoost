@@ -1,5 +1,24 @@
 # Feature Expansion Plan
 
+## Batch 3A - application_train Affordability Features
+
+Status: Completed
+
+Added:
+- `credit_income_ratio`
+- `annuity_income_ratio`
+- `credit_annuity_ratio`
+- `credit_goods_ratio`
+- `income_per_family_member`
+
+Result:
+- application_train increased from 122 to 127 columns.
+- Validation AUC improved from 0.7577 to 0.7645.
+- Merge-safe validation passed.
+
+Business meaning:
+These features summarize current borrower affordability, repayment burden, credit exposure, and household income pressure.
+
 ## Batch 2B - Time Features
 
 Status: Completed

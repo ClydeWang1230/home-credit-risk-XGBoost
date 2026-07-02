@@ -4,6 +4,30 @@
 Week 1 - Pipeline Clean & Reproducibility
 
 ## Latest Update 
+## Batch 3A Result - application_train Affordability and Exposure Features
+
+Added application-level ratio features:
+- `credit_income_ratio`: credit amount relative to borrower income.
+- `annuity_income_ratio`: scheduled repayment amount relative to borrower income.
+- `credit_annuity_ratio`: credit amount relative to scheduled repayment amount, approximating repayment horizon or amortization pressure.
+- `credit_goods_ratio`: credit amount relative to goods price, approximating financing coverage.
+- `income_per_family_member`: borrower income adjusted by family size.
+
+Validation:
+- application_train shape before ratio features: (307511, 122)
+- application_train shape after ratio features: (307511, 127)
+- previous_application_features shape: (338857, 12)
+- duplicate SK_ID_CURR count: 0
+- application_train rows before merge: 307511
+- application_train rows after merge: 307511
+
+Model Result:
+- AUC before Batch 3A: 0.7577
+- AUC after Batch 3A: 0.7645
+- Incremental improvement from Batch 3A: +0.0068
+
+Interpretation:
+The strong improvement suggests that current borrower affordability and credit exposure ratios provide meaningful predictive signals. This aligns with credit risk intuition because repayment burden and income capacity are central to default risk assessment.
 ## Feature Importance Report
 Generated:
 - `outputs/reports/feature_importance.csv`

@@ -1,10 +1,10 @@
 {
   "model_name": "XGBClassifier",
-  "validation_auc": 0.7577236612992637,
+  "validation_auc": 0.7644680135101143,
   "data_source": "local",
   "application_train_shape": [
     307511,
-    122
+    127
   ],
   "bureau_shape": [
     1716428,
