@@ -35,6 +35,64 @@ def upload_file_to_blob(client, container_name, local_file_path, blob_name):
     print(f"Uploaded {local_file_path} to Azure Blob as {blob_name}")
 
 
+def get_business_category(feature):
+    feature_upper = feature.upper()
+    feature_lower = feature.lower()
+
+    if "EXT_SOURCE" in feature_upper:
+        return "external_credit_score"
+    if any(
+        keyword in feature_upper
+        for keyword in ["AMT_CREDIT", "AMT_ANNUITY", "AMT_INCOME", "AMT_GOODS"]
+    ):
+        return "affordability_and_exposure"
+    if any(
+        keyword in feature_lower
+        for keyword in [
+            "prev",
+            "application",
+            "approval",
+            "refusal",
+            "down_payment",
+            "days_decision",
+        ]
+    ):
+        return "previous_application_behavior"
+    if "bureau" in feature_lower or "credit_active" in feature_lower:
+        return "external_bureau_history"
+    if "DAYS_BIRTH" in feature_upper or "DAYS_EMPLOYED" in feature_upper:
+        return "demographic_and_employment"
+    return "other"
+
+
+def get_business_interpretation(feature, business_category):
+    custom_interpretations = {
+        "avg_credit_prev": "Average previous credit amount, reflecting typical historical borrowing size.",
+        "max_credit_prev": "Maximum previous credit amount, capturing peak historical credit exposure.",
+        "avg_down_payment_prev": "Average previous down payment, a proxy for borrower liquidity in prior applications.",
+        "days_decision_mean": "Average timing of prior application decisions, summarizing historical application recency.",
+        "last_application_days": "Most recent previous application timing; values closer to 0 indicate more recent credit seeking.",
+        "n_prev_applications": "Total number of previous applications, capturing historical credit demand.",
+        "n_prev_approved": "Number of previously approved applications, indicating past access to credit.",
+        "n_prev_refusals": "Number of previously refused applications, a direct signal of historical credit rejection.",
+        "prev_approval_rate": "Share of previous applications approved, summarizing historical lender acceptance.",
+        "prev_refusal_rate": "Share of previous applications refused, summarizing historical rejection frequency.",
+        "avg_annuity_prev": "Average previous annuity amount, approximating prior repayment burden.",
+    }
+    if feature in custom_interpretations:
+        return custom_interpretations[feature]
+
+    generic_interpretations = {
+        "external_credit_score": "External source score feature that may summarize third-party credit risk signals.",
+        "affordability_and_exposure": "Amount-based feature related to borrower affordability, income, credit size, or exposure.",
+        "previous_application_behavior": "Historical application behavior feature derived from prior credit applications.",
+        "external_bureau_history": "External bureau history feature summarizing prior or active credit records.",
+        "demographic_and_employment": "Demographic or employment timing feature used as a borrower profile signal.",
+        "other": "Model input feature retained for predictive ranking and reviewed through feature importance.",
+    }
+    return generic_interpretations[business_category]
+
+
 def main():
     # 1. Load data
     if DATA_SOURCE == "local":
@@ -89,6 +147,7 @@ def main():
     os.makedirs("outputs", exist_ok=True)
     os.makedirs("outputs/metrics", exist_ok=True)
     os.makedirs("outputs/models", exist_ok=True)
+    os.makedirs("outputs/reports", exist_ok=True)
 
     bureau_features.to_csv("outputs/bureau_features.csv", index=False)
     if client is not None:
@@ -161,6 +220,26 @@ def main():
 
     with open("outputs/models/feature_list.json", "w", encoding="utf-8") as f:
         json.dump(list(X.columns), f, indent=2)
+
+    feature_importance = pd.DataFrame({
+        "feature": X.columns,
+        "importance": model.feature_importances_,
+    }).sort_values("importance", ascending=False).reset_index(drop=True)
+    feature_importance["importance_rank"] = feature_importance.index + 1
+    feature_importance["business_category"] = feature_importance["feature"].apply(
+        get_business_category
+    )
+    feature_importance["business_interpretation"] = feature_importance.apply(
+        lambda row: get_business_interpretation(
+            row["feature"],
+            row["business_category"]
+        ),
+        axis=1
+    )
+    feature_importance.to_csv(
+        "outputs/reports/feature_importance.csv",
+        index=False
+    )
 
     # 5. Predict risk score
     risk_scores = pd.DataFrame({

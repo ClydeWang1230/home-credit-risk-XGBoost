@@ -1,0 +1,120 @@
+feature,importance,importance_rank,business_category,business_interpretation
+EXT_SOURCE_3,0.10747519,1,external_credit_score,External source score feature that may summarize third-party credit risk signals.
+EXT_SOURCE_2,0.084554344,2,external_credit_score,External source score feature that may summarize third-party credit risk signals.
+FLAG_DOCUMENT_3,0.033481885,3,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+FLAG_EMP_PHONE,0.030187786,4,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+APARTMENTS_MEDI,0.029290294,5,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+LIVINGAREA_MEDI,0.028488318,6,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+prev_refusal_rate,0.025878884,7,previous_application_behavior,"Share of previous applications refused, summarizing historical rejection frequency."
+EXT_SOURCE_1,0.024118504,8,external_credit_score,External source score feature that may summarize third-party credit risk signals.
+AMT_REQ_CREDIT_BUREAU_HOUR,0.02230175,9,external_bureau_history,External bureau history feature summarizing prior or active credit records.
+AMT_GOODS_PRICE,0.021607058,10,affordability_and_exposure,"Amount-based feature related to borrower affordability, income, credit size, or exposure."
+avg_down_payment_prev,0.019885315,11,previous_application_behavior,"Average previous down payment, a proxy for borrower liquidity in prior applications."
+DAYS_BIRTH,0.019807518,12,demographic_and_employment,Demographic or employment timing feature used as a borrower profile signal.
+FLOORSMAX_MEDI,0.017235477,13,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+DEF_30_CNT_SOCIAL_CIRCLE,0.016658349,14,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+DAYS_EMPLOYED,0.015973628,15,demographic_and_employment,Demographic or employment timing feature used as a borrower profile signal.
+REGION_RATING_CLIENT_W_CITY,0.0155484695,16,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+AMT_CREDIT,0.014871684,17,affordability_and_exposure,"Amount-based feature related to borrower affordability, income, credit size, or exposure."
+AMT_ANNUITY,0.014747082,18,affordability_and_exposure,"Amount-based feature related to borrower affordability, income, credit size, or exposure."
+TOTALAREA_MODE,0.014605679,19,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+OWN_CAR_AGE,0.01446113,20,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+REG_CITY_NOT_LIVE_CITY,0.013695853,21,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+REG_CITY_NOT_WORK_CITY,0.01355846,22,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+FLOORSMIN_MEDI,0.012392132,23,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+avg_days_credit_update,0.012336215,24,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+prev_approval_rate,0.010979161,25,previous_application_behavior,"Share of previous applications approved, summarizing historical lender acceptance."
+total_overdue_amount,0.010649754,26,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+days_decision_mean,0.010396329,27,previous_application_behavior,"Average timing of prior application decisions, summarizing historical application recency."
+YEARS_BUILD_MEDI,0.010162,28,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+DEF_60_CNT_SOCIAL_CIRCLE,0.0099967625,29,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+avg_annuity_prev,0.009251037,30,previous_application_behavior,"Average previous annuity amount, approximating prior repayment burden."
+AMT_REQ_CREDIT_BUREAU_QRT,0.009250507,31,external_bureau_history,External bureau history feature summarizing prior or active credit records.
+FLAG_WORK_PHONE,0.008744009,32,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+max_credit_prev,0.008378018,33,previous_application_behavior,"Maximum previous credit amount, capturing peak historical credit exposure."
+n_prev_approved,0.0083557945,34,previous_application_behavior,"Number of previously approved applications, indicating past access to credit."
+FLAG_DOCUMENT_8,0.0080998875,35,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+avg_credit_sum,0.007951793,36,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+YEARS_BEGINEXPLUATATION_MODE,0.0074035283,37,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+DAYS_ID_PUBLISH,0.007251638,38,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+n_prev_refusals,0.006864426,39,previous_application_behavior,"Number of previously refused applications, a direct signal of historical credit rejection."
+FLAG_DOCUMENT_16,0.0068358574,40,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+REGION_RATING_CLIENT,0.006543863,41,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+FLAG_DOCUMENT_18,0.006420221,42,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+YEARS_BEGINEXPLUATATION_MEDI,0.006146065,43,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+avg_credit_prev,0.00589394,44,previous_application_behavior,"Average previous credit amount, reflecting typical historical borrowing size."
+AMT_REQ_CREDIT_BUREAU_DAY,0.005878024,45,external_bureau_history,External bureau history feature summarizing prior or active credit records.
+bureau_record_count,0.005859658,46,external_bureau_history,External bureau history feature summarizing prior or active credit records.
+APARTMENTS_AVG,0.005760572,47,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+NONLIVINGAREA_AVG,0.005741712,48,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+n_prev_applications,0.005726517,49,previous_application_behavior,"Total number of previous applications, capturing historical credit demand."
+BASEMENTAREA_MEDI,0.0056080953,50,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+FLAG_PHONE,0.005573948,51,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+AMT_REQ_CREDIT_BUREAU_YEAR,0.0054892004,52,external_bureau_history,External bureau history feature summarizing prior or active credit records.
+LANDAREA_MEDI,0.0052867783,53,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+DAYS_REGISTRATION,0.0050015566,54,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+CNT_CHILDREN,0.004987552,55,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+AMT_INCOME_TOTAL,0.0049865455,56,affordability_and_exposure,"Amount-based feature related to borrower affordability, income, credit size, or exposure."
+LIVINGAPARTMENTS_MODE,0.0049609295,57,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+DAYS_LAST_PHONE_CHANGE,0.0048236013,58,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+last_application_days,0.0047881836,59,previous_application_behavior,Most recent previous application timing; values closer to 0 indicate more recent credit seeking.
+OBS_60_CNT_SOCIAL_CIRCLE,0.00474109,60,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+BASEMENTAREA_AVG,0.004585987,61,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+APARTMENTS_MODE,0.004567487,62,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+CNT_FAM_MEMBERS,0.0044954647,63,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+HOUR_APPR_PROCESS_START,0.004459185,64,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+FLAG_DOCUMENT_21,0.0044057416,65,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+COMMONAREA_AVG,0.0043626823,66,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+COMMONAREA_MODE,0.0043484014,67,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+AMT_REQ_CREDIT_BUREAU_MON,0.0042717,68,external_bureau_history,External bureau history feature summarizing prior or active credit records.
+FLAG_CONT_MOBILE,0.004216892,69,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+REGION_POPULATION_RELATIVE,0.004166895,70,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+YEARS_BEGINEXPLUATATION_AVG,0.0041302065,71,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+NONLIVINGAREA_MEDI,0.004043104,72,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+NONLIVINGAPARTMENTS_MEDI,0.003985311,73,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+LIVINGAREA_MODE,0.0039646747,74,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+FLAG_DOCUMENT_11,0.003922221,75,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+ENTRANCES_AVG,0.0038571812,76,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+OBS_30_CNT_SOCIAL_CIRCLE,0.0037792202,77,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+ELEVATORS_AVG,0.0037536155,78,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+NONLIVINGAPARTMENTS_MODE,0.0036445935,79,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+ELEVATORS_MODE,0.0035878809,80,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+ELEVATORS_MEDI,0.0034523641,81,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+YEARS_BUILD_MODE,0.0034262664,82,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+LANDAREA_AVG,0.0033091134,83,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+LIVINGAREA_AVG,0.0032467535,84,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+FLAG_EMAIL,0.0031776407,85,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+ENTRANCES_MODE,0.0031465446,86,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+YEARS_BUILD_AVG,0.0031462372,87,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+LIVINGAPARTMENTS_AVG,0.0031262543,88,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+FLOORSMIN_AVG,0.002940599,89,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+REG_REGION_NOT_WORK_REGION,0.0027548608,90,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+LANDAREA_MODE,0.0027428134,91,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+ENTRANCES_MEDI,0.0026816744,92,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+NONLIVINGAREA_MODE,0.0025876267,93,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+COMMONAREA_MEDI,0.0024018467,94,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+FLAG_DOCUMENT_6,0.001361498,95,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+FLAG_MOBIL,0.0,96,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+FLOORSMIN_MODE,0.0,97,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+NONLIVINGAPARTMENTS_AVG,0.0,98,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+BASEMENTAREA_MODE,0.0,99,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+LIVE_REGION_NOT_WORK_REGION,0.0,100,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+LIVE_CITY_NOT_WORK_CITY,0.0,101,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+FLOORSMAX_AVG,0.0,102,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+REG_REGION_NOT_LIVE_REGION,0.0,103,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+FLOORSMAX_MODE,0.0,104,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+FLAG_DOCUMENT_10,0.0,105,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+FLAG_DOCUMENT_7,0.0,106,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+FLAG_DOCUMENT_9,0.0,107,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+FLAG_DOCUMENT_4,0.0,108,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+FLAG_DOCUMENT_2,0.0,109,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+LIVINGAPARTMENTS_MEDI,0.0,110,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+FLAG_DOCUMENT_5,0.0,111,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+AMT_REQ_CREDIT_BUREAU_WEEK,0.0,112,external_bureau_history,External bureau history feature summarizing prior or active credit records.
+FLAG_DOCUMENT_19,0.0,113,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+FLAG_DOCUMENT_20,0.0,114,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+FLAG_DOCUMENT_12,0.0,115,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+FLAG_DOCUMENT_14,0.0,116,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+FLAG_DOCUMENT_13,0.0,117,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+FLAG_DOCUMENT_15,0.0,118,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+FLAG_DOCUMENT_17,0.0,119,other,Model input feature retained for predictive ranking and reviewed through feature importance.

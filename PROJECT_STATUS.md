@@ -4,6 +4,25 @@
 Week 1 - Pipeline Clean & Reproducibility
 
 ## Latest Update 
+## Feature Importance Report
+Generated:
+- `outputs/reports/feature_importance.csv`
+
+The report includes:
+- feature importance from XGBoost
+- importance ranking
+- business category mappings
+- business interpretations for engineered features
+
+Key observations:
+- `EXT_SOURCE_3` and `EXT_SOURCE_2` are the top-ranked external credit score features.
+- `prev_refusal_rate` ranked 7th, suggesting that historical refusal behavior is a strong predictive signal.
+- `avg_down_payment_prev` ranked 11th, suggesting that prior borrower self-funding/down payment behavior contributes to risk prediction.
+- Other engineered previous_application features such as `prev_approval_rate`, `days_decision_mean`, and `avg_annuity_prev` also appear in the importance ranking.
+
+Interpretation:
+The feature importance report helps connect model output with credit risk business logic. Engineered previous_application features are not only merge-safe and performance-improving, but also interpretable as historical application behavior and borrower affordability signals.
+
 ## Batch 2B Result - previous_application Time Features
 
 Added time-based previous application features:
