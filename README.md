@@ -1,195 +1,241 @@
-# Credit Risk Modeling (Kaggle + Azure Pipeline)
+# Credit Risk Analytics Pipeline with XGBoost
 
-## 📌 Overview
+Week 1 portfolio README v1
 
-This project started as a **Kaggle-based credit risk modeling task** and was later extended into a **production-style ML pipeline with Azure integration**.
+## Overview
 
-It demonstrates both:
+This project is a reproducible, business-oriented credit risk analytics pipeline built from the Home Credit Default Risk dataset. It started as a Kaggle-style notebook project and is being migrated into a modular portfolio project for fintech, banking analytics, credit risk analytics, data analyst, and risk analyst roles.
 
-* 📊 **Data analysis & modeling skills (Kaggle workflow)**
-* ⚙️ **Data engineering & pipeline design (production workflow)**
+The goal is not only to improve Kaggle AUC. The focus is to build a clear pipeline that connects credit risk feature engineering, model training, validation, feature importance, and business interpretation.
 
----
+## Business Problem
 
-# 🧠 Part 1: Data Analysis & Modeling (Kaggle)
+Credit risk teams need to estimate the likelihood that an applicant may default while keeping decisions explainable to analysts, lenders, and business stakeholders. This project turns raw application, bureau, and previous-loan history into interpretable borrower-level risk signals and model outputs that support portfolio review and credit decision analysis.
 
-## 🔍 Dataset
+## Current Status
 
-* Home Credit Default Risk dataset
-* Multiple relational tables:
+The Week 1 pipeline runs end-to-end in local mode from raw CSV files under `data/raw/`. Azure Blob Storage integration is still available as an optional data source, but local execution is the default.
 
-  * application_train
-  * bureau
-  * previous_application
-  * etc.
+The pipeline currently:
 
----
+- Loads `application_train.csv`, `bureau.csv`, and `previous_application.csv`
+- Builds bureau-level applicant features
+- Builds previous-application history features
+- Adds application-level affordability and exposure ratio features
+- Validates one-row-per-applicant historical feature tables before merging
+- Trains an `XGBClassifier`
+- Saves model metrics, model artifacts, risk scores, and a feature importance report
 
-## 📊 Exploratory Data Analysis
+## Project Structure
 
-* Distribution of target variable
-* Income vs default patterns
-* Credit behavior insights
-
----
-
-## 🧮 Feature Engineering
-
-* Aggregations from relational tables:
-
-  * `previous_application`
-  * `bureau`
-* Handling missing values
-* Encoding categorical variables
-
----
-
-## 🧠 Modeling
-
-* Model: XGBoost
-* Evaluation: AUC
-* Feature importance analysis
-
----
-
-## 🗄️ SQL Usage
-
-* Data extraction and joins
-* Feature aggregation logic
-
----
-
-## 📈 Tableau Dashboard
-
-* Visualized credit risk patterns
-* Business-oriented insights
-
----
-
-# ⚙️ Part 2: Production-Style Pipeline (Azure)
-
-## 🚀 Motivation
-
-Transform notebook-based workflow into a **scalable and reusable pipeline**
-
----
-
-## 🏗️ Architecture
-
-```id="7a3vkl"
-Local Python (PyCharm)
-        ↓
-Azure Blob Storage
-        ↓
-Feature Engineering
-        ↓
-Model Training
-        ↓
-Prediction Output
+```text
+home-credit-risk-XGBoost/
+  data/
+    raw/                         # Local raw CSV files, not uploaded to GitHub
+  notebooks/                     # Exploratory notebook reference work
+  outputs/
+    metrics/
+      metrics.json
+    models/
+      model.pkl                  # Local model artifact, not uploaded to GitHub
+      feature_list.json
+    reports/
+      feature_importance.csv
+    bureau_features.csv
+    previous_application_features.csv
+    risk_scores.csv
+  sql_queries/                   # SQL reference queries and feature logic notes
+  src/
+    config.py
+    data_ingestion.py
+    feature_engineering.py
+    model.py
+  main.py
+  requirements.txt
+  env.example
+  README.md
 ```
 
----
+## Data
 
-## 🧱 Project Structure
+This project uses the Home Credit Default Risk dataset.
 
-```id="4n0m2p"
-project/
-│
-├── src/
-│   ├── data_ingestion.py
-│   ├── feature_engineering.py
-│   ├── model.py
-│   └── config.py
-│
-├── main.py
-├── .env.example
-└── README.md
+Required local files:
+
+```text
+data/raw/application_train.csv
+data/raw/bureau.csv
+data/raw/previous_application.csv
 ```
 
----
+Raw CSV files, generated CSV outputs, and model pickle artifacts are excluded from GitHub through `.gitignore` because of size, licensing, and reproducibility considerations.
 
-## 🔄 Pipeline Steps
+## Run Locally
 
-### 1. Data Ingestion
+Install dependencies:
 
-* Load raw data from Azure Blob
-
-### 2. Feature Engineering
-
-* Example (bureau):
-
-```python id="oj9k6g"
-bureau.groupby("SK_ID_CURR").agg({
-    "SK_ID_BUREAU": "count",
-    "AMT_CREDIT_SUM": "mean",
-    "AMT_CREDIT_SUM_OVERDUE": "sum"
-})
+```bash
+pip install -r requirements.txt
 ```
 
----
+Place the required raw CSV files under:
 
-### 3. Model Training
-
-* Merge features with main dataset
-* Train XGBoost model
-
----
-
-### 4. Prediction & Output
-
-* Generate risk scores
-* Save & upload to Azure Blob
-
----
-
-## 🔐 Environment Setup
-
-```id="j1k7xn"
-Create a local `.env` file based on `env.example`:
-
-AZURE_STORAGE_ACCOUNT=your_account
-AZURE_STORAGE_KEY=your_key
+```text
+data/raw/
 ```
 
----
+Run the pipeline:
+From the project root directory, run:
 
-## ▶️ Run
-
-```bash id="1ybhsl"
+```bash
 python main.py
 ```
 
----
+The default data source is local:
 
-# 💡 Key Highlights
+```python
+DATA_SOURCE = os.getenv("DATA_SOURCE", "local").lower()
+```
 
-* Combined **Kaggle modeling + real-world pipeline design**
-* Integrated **Azure cloud storage**
-* Built **modular and reusable code structure**
-* Demonstrated both **analysis and engineering skills**
+Optional Azure mode can be enabled by setting:
 
----
+```bash
+DATA_SOURCE=azure
+```
 
-# 🎯 Future Improvements
+Azure credentials should be configured from `env.example` if Azure Blob Storage is used.
 
-* Multi-table feature pipeline
-* Model deployment (API)
-* Automated pipeline scheduling
+## Pipeline Outputs
 
----
+After a successful run, the pipeline generates:
 
-# 👨‍💻 Author
+```text
+outputs/metrics/metrics.json
+outputs/models/model.pkl
+outputs/models/feature_list.json
+outputs/risk_scores.csv
+outputs/reports/feature_importance.csv
+```
 
-Clyde Wang
+The metrics file records validation AUC, data source, input shapes, feature table shapes, duplicate-key checks, and merge row-count validation.
 
-This project demonstrates my transition from:
-- Notebook-based experimentation (Kaggle)
-- To production-style machine learning pipeline with Azure
+## Feature Engineering
 
-Focus areas:
-- Credit risk modeling
-- Feature engineering on relational datasets
-- Cloud-based data pipeline design
+The feature engineering layer converts one-to-many historical credit tables into one-row-per-applicant features that can be safely merged into `application_train`.
 
----
+### Previous Application Features
 
+These features summarize a borrower's prior application behavior:
+
+- `n_prev_applications`: total number of previous applications
+- `n_prev_approved`: number of previously approved applications
+- `n_prev_refusals`: number of previously refused applications
+- `prev_approval_rate`: share of previous applications approved
+- `prev_refusal_rate`: share of previous applications refused
+- `avg_annuity_prev`: average prior annuity amount
+- `avg_credit_prev`: average prior credit amount
+- `max_credit_prev`: maximum prior credit amount
+- `avg_down_payment_prev`: average prior down payment
+- `days_decision_mean`: average timing of previous application decisions
+- `last_application_days`: most recent previous application timing
+
+Business interpretation: previous refusals, approval rates, prior credit amounts, and recent credit-seeking behavior help describe historical borrower risk beyond the current application.
+
+### Application Affordability Features
+
+These features are derived directly from `application_train`:
+
+- `credit_income_ratio`: credit amount relative to borrower income
+- `annuity_income_ratio`: scheduled repayment amount relative to income
+- `credit_annuity_ratio`: credit amount relative to scheduled repayment
+- `credit_goods_ratio`: credit amount relative to goods price
+- `income_per_family_member`: income adjusted by family size
+
+Business interpretation: these ratios make the model more explainable by connecting credit exposure, repayment pressure, financing coverage, and household capacity.
+
+### Bureau Features
+
+The current bureau feature table includes:
+
+- `bureau_record_count`
+- `avg_credit_sum`
+- `total_overdue_amount`
+- `avg_days_credit_update`
+
+Business interpretation: bureau records provide external credit history signals, including exposure, overdue balances, and credit record update timing.
+
+## Model Performance
+
+Validation metric: ROC AUC.
+
+| Stage | Feature Update | Validation AUC |
+| --- | --- | ---: |
+| Initial local baseline | Local pipeline with initial bureau and previous-application features | 0.7553 |
+| Batch 2A | Added previous-application amount features | 0.7576 |
+| Batch 2B | Added previous-application time features | 0.7577 |
+| Batch 3A | Added application affordability and exposure ratio features | 0.7645 |
+
+The strongest Week 1 improvement came from adding application-level affordability and exposure ratios.
+
+## Explainability
+
+The pipeline generates:
+
+```text
+outputs/reports/feature_importance.csv
+```
+
+The report includes:
+
+- `feature`
+- `importance`
+- `importance_rank`
+- `business_category`
+- `business_interpretation`
+
+Current feature importance observations:
+
+- `EXT_SOURCE_3` and `EXT_SOURCE_2` remain top-ranked external credit score features.
+- `prev_refusal_rate` ranks highly, showing that historical refusal behavior is a strong predictive signal.
+- `credit_goods_ratio` ranks highly, suggesting financing coverage is meaningful for risk prediction.
+- `avg_down_payment_prev` and `credit_annuity_ratio` also appear relatively high in the feature importance report.
+
+This report is intended to make model results more interview-ready and easier to discuss with business stakeholders.
+
+## Validation Checks
+
+The pipeline records and prints checks such as:
+
+- Previous-application feature duplicate `SK_ID_CURR` count
+- Application row count before and after historical feature merges
+- Input data shapes
+- Feature table shapes
+
+Current merge validation confirms:
+
+- `previous_application_features` has one row per `SK_ID_CURR`
+- Duplicate `SK_ID_CURR` count is `0`
+- `application_train` row count is preserved at `307511` after merge
+
+## Roadmap
+
+Near-term next steps:
+
+- Add more bureau history features with clear business interpretation
+- Add evaluation reporting beyond AUC
+- Add risk score bands and portfolio-level risk summaries
+- Improve README and project documentation as the structure stabilizes
+- Add model comparison experiments only after the feature layer is stable
+
+Future ideas, not yet completed:
+
+- SHAP explainability
+- FastAPI scoring endpoint
+- AI-assisted analyst workflow
+- RAG-based credit knowledge retrieval and SQL analytics assistant
+
+## Portfolio Narrative
+
+I expanded an original Kaggle-style credit risk notebook into a modular, reproducible analytics pipeline. The project now converts historical one-to-many credit tables into applicant-level risk features, validates merge safety, trains an XGBoost model, saves model artifacts, and produces a business-readable feature importance report.
+
+This project demonstrates practical skills in credit risk modeling, feature engineering, model evaluation, reproducible pipelines, and business interpretation for fintech and banking analytics roles.
