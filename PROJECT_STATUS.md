@@ -9,6 +9,31 @@ Key observations from feature importance:
 - `credit_annuity_ratio` ranked 13th, suggesting that the relationship between loan size and scheduled repayment amount contributes to risk prediction.
 - This supports the strong AUC improvement from Batch 3A, where application-level affordability and exposure features improved AUC from 0.7577 to 0.7645.
 
+## Batch 4A Result - bureau External Credit History Features
+
+Added bureau history features:
+- `n_active_bureau_credits`: number of active external bureau credit records.
+- `n_closed_bureau_credits`: number of closed external bureau credit records.
+- `active_credit_ratio`: share of active bureau credit records.
+- `total_bureau_debt`: total external bureau debt amount.
+- `bureau_debt_credit_ratio`: external debt relative to external credit amount.
+- `max_credit_day_overdue`: maximum overdue days in bureau records.
+- `n_overdue_bureau_records`: number of bureau records with overdue days greater than 0.
+
+Validation:
+- bureau_features shape: (305811, 12)
+- previous_application_features shape: (338857, 12)
+- application_train rows before merge: 307511
+- application_train rows after merge: 307511
+
+Model Result:
+- AUC before Batch 4A: 0.7645
+- AUC after Batch 4A: 0.7649
+- Incremental improvement from Batch 4A: +0.0004
+
+Interpretation:
+The small lift suggests that external bureau history adds incremental predictive value. More importantly, it completes the feature layer by adding external credit behavior alongside current application affordability and internal previous-application history.
+
 ## Batch 3A Result - application_train Affordability and Exposure Features
 
 Added application-level ratio features:

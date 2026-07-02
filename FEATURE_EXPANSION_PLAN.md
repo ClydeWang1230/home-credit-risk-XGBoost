@@ -1,5 +1,25 @@
 # Feature Expansion Plan
 
+## Batch 4A - bureau External Credit History Features
+
+Status: Completed
+
+Added:
+- `n_active_bureau_credits`
+- `n_closed_bureau_credits`
+- `active_credit_ratio`
+- `total_bureau_debt`
+- `bureau_debt_credit_ratio`
+- `max_credit_day_overdue`
+- `n_overdue_bureau_records`
+
+Result:
+- bureau_features increased from 5 to 12 columns.
+- Validation AUC improved from 0.7645 to 0.7649.
+- Merge-safe validation passed.
+
+Business meaning:
+These features summarize external credit activity, external debt burden, bureau overdue behavior, and active credit exposure.
 ## Batch 3A - application_train Affordability Features
 
 Status: Completed

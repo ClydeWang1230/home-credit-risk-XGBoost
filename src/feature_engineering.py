@@ -16,6 +16,95 @@ def build_bureau_features(bureau):
         "DAYS_CREDIT_UPDATE": "avg_days_credit_update"
     }, inplace=True)
 
+    # Business signal: active external credits indicate current bureau exposure.
+    active_bureau_credits = (
+        bureau[bureau["CREDIT_ACTIVE"] == "Active"]
+        .groupby("SK_ID_CURR")
+        .size()
+        .reset_index(name="n_active_bureau_credits")
+    )
+
+    # Business signal: closed external credits reflect completed credit history.
+    closed_bureau_credits = (
+        bureau[bureau["CREDIT_ACTIVE"] == "Closed"]
+        .groupby("SK_ID_CURR")
+        .size()
+        .reset_index(name="n_closed_bureau_credits")
+    )
+
+    # Business signal: total bureau debt captures outstanding external obligations.
+    total_bureau_debt = (
+        bureau
+        .groupby("SK_ID_CURR")["AMT_CREDIT_SUM_DEBT"]
+        .sum()
+        .reset_index(name="total_bureau_debt")
+    )
+
+    total_bureau_credit = (
+        bureau
+        .groupby("SK_ID_CURR")["AMT_CREDIT_SUM"]
+        .sum()
+        .reset_index(name="total_bureau_credit")
+    )
+
+    # Business signal: maximum overdue days highlights severe delinquency history.
+    max_credit_day_overdue = (
+        bureau
+        .groupby("SK_ID_CURR")["CREDIT_DAY_OVERDUE"]
+        .max()
+        .reset_index(name="max_credit_day_overdue")
+    )
+
+    # Business signal: overdue record count captures frequency of bureau delinquency.
+    overdue_bureau_records = (
+        bureau[bureau["CREDIT_DAY_OVERDUE"] > 0]
+        .groupby("SK_ID_CURR")
+        .size()
+        .reset_index(name="n_overdue_bureau_records")
+    )
+
+    bureau_features = (
+        bureau_features
+        .merge(active_bureau_credits, on="SK_ID_CURR", how="left")
+        .merge(closed_bureau_credits, on="SK_ID_CURR", how="left")
+        .merge(total_bureau_debt, on="SK_ID_CURR", how="left")
+        .merge(total_bureau_credit, on="SK_ID_CURR", how="left")
+        .merge(max_credit_day_overdue, on="SK_ID_CURR", how="left")
+        .merge(overdue_bureau_records, on="SK_ID_CURR", how="left")
+    )
+    bureau_features[
+        [
+            "n_active_bureau_credits",
+            "n_closed_bureau_credits",
+            "total_bureau_debt",
+            "max_credit_day_overdue",
+            "n_overdue_bureau_records",
+        ]
+    ] = bureau_features[
+        [
+            "n_active_bureau_credits",
+            "n_closed_bureau_credits",
+            "total_bureau_debt",
+            "max_credit_day_overdue",
+            "n_overdue_bureau_records",
+        ]
+    ].fillna(0)
+
+    bureau_features["active_credit_ratio"] = (
+        bureau_features["n_active_bureau_credits"]
+        / bureau_features["bureau_record_count"]
+    )
+    bureau_features["bureau_debt_credit_ratio"] = (
+        bureau_features["total_bureau_debt"]
+        / bureau_features["total_bureau_credit"]
+    )
+    bureau_features[
+        ["active_credit_ratio", "bureau_debt_credit_ratio"]
+    ] = bureau_features[
+        ["active_credit_ratio", "bureau_debt_credit_ratio"]
+    ].replace([np.inf, -np.inf], np.nan).fillna(0)
+    bureau_features.drop(columns=["total_bureau_credit"], inplace=True)
+
     return bureau_features
 
 
