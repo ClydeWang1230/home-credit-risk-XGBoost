@@ -4,7 +4,35 @@
 Week 1 - Pipeline Clean & Reproducibility
 
 ## Latest Update 
-Key observations from feature importance:
+## Risk Band Summary
+
+Generated:
+- `outputs/reports/risk_band_summary.csv`
+
+The pipeline now assigns each applicant into one of five quantile-based risk bands:
+- Band 1 - Lowest Risk
+- Band 2
+- Band 3
+- Band 4
+- Band 5 - Highest Risk
+
+Validation result:
+- Applicant count is evenly distributed across the five bands.
+- Observed default rate increases monotonically across risk bands:
+  - Band 1 - Lowest Risk: 1.36%
+  - Band 2: 2.86%
+  - Band 3: 4.97%
+  - Band 4: 9.00%
+  - Band 5 - Highest Risk: 22.17%
+
+Interpretation:
+The monotonic increase in observed default rate shows that the model's predicted risk scores can meaningfully rank applicants by credit risk. This turns raw model probabilities into a portfolio-level risk segmentation report that is easier to discuss in a banking analytics context.
+Feature importance observations after Batch 4A:
+- `bureau_debt_credit_ratio` ranked 6th, suggesting that external bureau debt burden is a meaningful predictive signal.
+- `n_active_bureau_credits` also appeared in the upper feature ranking, indicating that active external credit exposure contributes to risk prediction.
+- Although Batch 4A only improved AUC from 0.7645 to 0.7649, the new bureau features improved the business completeness of the feature layer by adding external credit history and external debt burden signals.
+
+## Key observations from feature importance:
 - `credit_goods_ratio` ranked 7th, suggesting that financing coverage between credit amount and goods price is a meaningful predictive signal.
 - `credit_annuity_ratio` ranked 13th, suggesting that the relationship between loan size and scheduled repayment amount contributes to risk prediction.
 - This supports the strong AUC improvement from Batch 3A, where application-level affordability and exposure features improved AUC from 0.7577 to 0.7645.

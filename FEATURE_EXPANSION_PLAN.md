@@ -1,5 +1,9 @@
 # Feature Expansion Plan
 
+Feature importance observations after Batch 4A:
+- `bureau_debt_credit_ratio` ranked 6th, suggesting that external bureau debt burden is a meaningful predictive signal.
+- `n_active_bureau_credits` also appeared in the upper feature ranking, indicating that active external credit exposure contributes to risk prediction.
+- Although Batch 4A only improved AUC from 0.7645 to 0.7649, the new bureau features improved the business completeness of the feature layer by adding external credit history and external debt burden signals.
 ## Batch 4A - bureau External Credit History Features
 
 Status: Completed

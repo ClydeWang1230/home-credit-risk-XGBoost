@@ -4,7 +4,7 @@ EXT_SOURCE_2,0.08228547,2,external_credit_score,External source score feature th
 FLAG_DOCUMENT_3,0.035644665,3,other,Model input feature retained for predictive ranking and reviewed through feature importance.
 AMT_REQ_CREDIT_BUREAU_HOUR,0.03372369,4,external_bureau_history,External bureau history feature summarizing prior or active credit records.
 credit_goods_ratio,0.028100453,5,affordability_and_exposure,"Credit amount relative to goods price, approximating financing coverage and borrower self-funding capacity."
-bureau_debt_credit_ratio,0.026721831,6,affordability_and_exposure,"Amount-based feature related to borrower affordability, income, credit size, or exposure."
+bureau_debt_credit_ratio,0.026721831,6,external_bureau_history,"External bureau debt relative to external credit amount, capturing external debt burden and credit utilization pressure."
 prev_refusal_rate,0.025915673,7,previous_application_behavior,"Share of previous applications refused, summarizing historical rejection frequency."
 FLAG_EMP_PHONE,0.02499943,8,other,Model input feature retained for predictive ranking and reviewed through feature importance.
 EXT_SOURCE_1,0.024527472,9,external_credit_score,External source score feature that may summarize third-party credit risk signals.
@@ -24,7 +24,7 @@ REGION_RATING_CLIENT_W_CITY,0.012756498,22,other,Model input feature retained fo
 AMT_ANNUITY,0.011260218,23,affordability_and_exposure,"Amount-based feature related to borrower affordability, income, credit size, or exposure."
 DEF_30_CNT_SOCIAL_CIRCLE,0.011184217,24,other,Model input feature retained for predictive ranking and reviewed through feature importance.
 FLAG_WORK_PHONE,0.0105126025,25,other,Model input feature retained for predictive ranking and reviewed through feature importance.
-n_active_bureau_credits,0.010186767,26,external_bureau_history,External bureau history feature summarizing prior or active credit records.
+n_active_bureau_credits,0.010186767,26,external_bureau_history,"Number of active external bureau credit records, capturing current external credit activity."
 YEARS_BUILD_MEDI,0.009971638,27,other,Model input feature retained for predictive ranking and reviewed through feature importance.
 ELEVATORS_AVG,0.009591539,28,other,Model input feature retained for predictive ranking and reviewed through feature importance.
 prev_approval_rate,0.009589534,29,previous_application_behavior,"Share of previous applications approved, summarizing historical lender acceptance."
@@ -35,14 +35,14 @@ annuity_income_ratio,0.008048177,33,affordability_and_exposure,"Scheduled repaym
 total_overdue_amount,0.007977586,34,other,Model input feature retained for predictive ranking and reviewed through feature importance.
 n_prev_approved,0.007973388,35,previous_application_behavior,"Number of previously approved applications, indicating past access to credit."
 days_decision_mean,0.0076566567,36,previous_application_behavior,"Average timing of prior application decisions, summarizing historical application recency."
-n_closed_bureau_credits,0.007321825,37,external_bureau_history,External bureau history feature summarizing prior or active credit records.
+n_closed_bureau_credits,0.007321825,37,external_bureau_history,"Number of closed external bureau credit records, capturing historical completed external credit relationships."
 FLOORSMAX_MEDI,0.0072086207,38,other,Model input feature retained for predictive ranking and reviewed through feature importance.
 FLAG_DOCUMENT_16,0.0071700523,39,other,Model input feature retained for predictive ranking and reviewed through feature importance.
 AMT_REQ_CREDIT_BUREAU_QRT,0.0071579507,40,external_bureau_history,External bureau history feature summarizing prior or active credit records.
 avg_annuity_prev,0.0071477345,41,previous_application_behavior,"Average previous annuity amount, approximating prior repayment burden."
-n_overdue_bureau_records,0.0071184174,42,external_bureau_history,External bureau history feature summarizing prior or active credit records.
+n_overdue_bureau_records,0.0071184174,42,external_bureau_history,"Number of bureau records with overdue days greater than zero, capturing frequency of external overdue behavior."
 max_credit_prev,0.0069973567,43,previous_application_behavior,"Maximum previous credit amount, capturing peak historical credit exposure."
-total_bureau_debt,0.006943794,44,external_bureau_history,External bureau history feature summarizing prior or active credit records.
+total_bureau_debt,0.006943794,44,external_bureau_history,"Total external bureau debt amount, capturing external debt burden."
 YEARS_BEGINEXPLUATATION_MODE,0.0068163946,45,other,Model input feature retained for predictive ranking and reviewed through feature importance.
 APARTMENTS_MODE,0.0065428987,46,other,Model input feature retained for predictive ranking and reviewed through feature importance.
 DAYS_ID_PUBLISH,0.0064091915,47,other,Model input feature retained for predictive ranking and reviewed through feature importance.
@@ -51,7 +51,7 @@ n_prev_refusals,0.006197139,49,previous_application_behavior,"Number of previous
 REG_CITY_NOT_WORK_CITY,0.0061318954,50,other,Model input feature retained for predictive ranking and reviewed through feature importance.
 credit_income_ratio,0.0058984403,51,affordability_and_exposure,"Credit amount relative to borrower income, capturing loan-to-income pressure."
 avg_credit_prev,0.005842254,52,previous_application_behavior,"Average previous credit amount, reflecting typical historical borrowing size."
-active_credit_ratio,0.005800754,53,affordability_and_exposure,"Amount-based feature related to borrower affordability, income, credit size, or exposure."
+active_credit_ratio,0.005800754,53,external_bureau_history,"Share of active bureau credit records, capturing the degree of active external credit exposure."
 avg_days_credit_update,0.0053178254,54,other,Model input feature retained for predictive ranking and reviewed through feature importance.
 AMT_REQ_CREDIT_BUREAU_WEEK,0.005306072,55,external_bureau_history,External bureau history feature summarizing prior or active credit records.
 YEARS_BUILD_AVG,0.005272497,56,other,Model input feature retained for predictive ranking and reviewed through feature importance.
@@ -86,7 +86,7 @@ LIVINGAREA_MODE,0.0031964257,84,other,Model input feature retained for predictiv
 LANDAREA_MEDI,0.002702113,85,other,Model input feature retained for predictive ranking and reviewed through feature importance.
 ENTRANCES_MEDI,0.0026352415,86,other,Model input feature retained for predictive ranking and reviewed through feature importance.
 LIVINGAPARTMENTS_MODE,0.0024996588,87,other,Model input feature retained for predictive ranking and reviewed through feature importance.
-max_credit_day_overdue,0.0024970649,88,other,Model input feature retained for predictive ranking and reviewed through feature importance.
+max_credit_day_overdue,0.0024970649,88,external_bureau_history,"Maximum overdue days across bureau records, capturing severe external delinquency history."
 NONLIVINGAPARTMENTS_AVG,0.0023728793,89,other,Model input feature retained for predictive ranking and reviewed through feature importance.
 BASEMENTAREA_AVG,0.002349641,90,other,Model input feature retained for predictive ranking and reviewed through feature importance.
 LANDAREA_AVG,0.0021434466,91,other,Model input feature retained for predictive ranking and reviewed through feature importance.

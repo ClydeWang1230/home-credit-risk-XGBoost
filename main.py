@@ -37,9 +37,20 @@ def upload_file_to_blob(client, container_name, local_file_path, blob_name):
 def get_business_category(feature):
     feature_upper = feature.upper()
     feature_lower = feature.lower()
+    bureau_features = {
+        "bureau_debt_credit_ratio",
+        "n_active_bureau_credits",
+        "n_closed_bureau_credits",
+        "active_credit_ratio",
+        "total_bureau_debt",
+        "max_credit_day_overdue",
+        "n_overdue_bureau_records",
+    }
 
     if "EXT_SOURCE" in feature_upper:
         return "external_credit_score"
+    if feature in bureau_features:
+        return "external_bureau_history"
     if any(
         keyword in feature_upper
         for keyword in ["AMT_CREDIT", "AMT_ANNUITY", "AMT_INCOME", "AMT_GOODS"]
@@ -89,6 +100,13 @@ def get_business_interpretation(feature, business_category):
         "credit_annuity_ratio": "Credit amount relative to scheduled repayment amount, approximating repayment horizon or amortization pressure.",
         "credit_goods_ratio": "Credit amount relative to goods price, approximating financing coverage and borrower self-funding capacity.",
         "income_per_family_member": "Borrower income adjusted by family size, capturing household income capacity.",
+        "bureau_debt_credit_ratio": "External bureau debt relative to external credit amount, capturing external debt burden and credit utilization pressure.",
+        "n_active_bureau_credits": "Number of active external bureau credit records, capturing current external credit activity.",
+        "n_closed_bureau_credits": "Number of closed external bureau credit records, capturing historical completed external credit relationships.",
+        "active_credit_ratio": "Share of active bureau credit records, capturing the degree of active external credit exposure.",
+        "total_bureau_debt": "Total external bureau debt amount, capturing external debt burden.",
+        "max_credit_day_overdue": "Maximum overdue days across bureau records, capturing severe external delinquency history.",
+        "n_overdue_bureau_records": "Number of bureau records with overdue days greater than zero, capturing frequency of external overdue behavior.",
     }
     if feature in custom_interpretations:
         return custom_interpretations[feature]
@@ -261,7 +279,67 @@ def main():
         "risk_score": predict(model, X)
     })
 
+    risk_band_labels = [
+        "Band 1 - Lowest Risk",
+        "Band 2",
+        "Band 3",
+        "Band 4",
+        "Band 5 - Highest Risk",
+    ]
+    risk_scores["risk_band"] = pd.qcut(
+        risk_scores["risk_score"].rank(method="first"),
+        q=5,
+        labels=risk_band_labels
+    )
+
+    risk_scores_for_summary = risk_scores.copy()
+    if "TARGET" in app_train.columns:
+        risk_scores_for_summary["TARGET"] = app_train["TARGET"].values
+
+    risk_band_summary = (
+        risk_scores_for_summary
+        .groupby("risk_band", observed=True)
+        .agg(
+            applicant_count=("SK_ID_CURR", "count"),
+            avg_predicted_risk=("risk_score", "mean"),
+            min_predicted_risk=("risk_score", "min"),
+            max_predicted_risk=("risk_score", "max"),
+        )
+        .reset_index()
+    )
+    if "TARGET" in risk_scores_for_summary.columns:
+        observed_default_rate = (
+            risk_scores_for_summary
+            .groupby("risk_band", observed=True)["TARGET"]
+            .mean()
+            .reset_index(name="observed_default_rate")
+        )
+        risk_band_summary = risk_band_summary.merge(
+            observed_default_rate,
+            on="risk_band",
+            how="left"
+        )
+    else:
+        risk_band_summary["observed_default_rate"] = pd.NA
+
+    risk_band_summary = risk_band_summary[
+        [
+            "risk_band",
+            "applicant_count",
+            "avg_predicted_risk",
+            "observed_default_rate",
+            "min_predicted_risk",
+            "max_predicted_risk",
+        ]
+    ]
+    risk_band_summary.to_csv(
+        "outputs/reports/risk_band_summary.csv",
+        index=False
+    )
+    print("Risk band summary saved to outputs/reports/risk_band_summary.csv")
+
     risk_scores.to_csv("outputs/risk_scores.csv", index=False)
+    print("Risk scores saved to outputs/risk_scores.csv")
 
     # 6. Upload output
     if client is not None:
