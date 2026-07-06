@@ -223,7 +223,7 @@ def main():
     )
 
     # 4. Train model
-    model, auc, X = train_model(app_train)
+    model, auc, X, validation_results, evaluation_metrics = train_model(app_train)
 
     print(f"Validation AUC: {auc:.4f}")
 
@@ -273,12 +273,6 @@ def main():
         index=False
     )
 
-    # 5. Predict risk score
-    risk_scores = pd.DataFrame({
-        "SK_ID_CURR": app_train["SK_ID_CURR"],
-        "risk_score": predict(model, X)
-    })
-
     risk_band_labels = [
         "Band 1 - Lowest Risk",
         "Band 2",
@@ -286,6 +280,44 @@ def main():
         "Band 4",
         "Band 5 - Highest Risk",
     ]
+
+    validation_results_with_bands = validation_results.copy()
+    validation_results_with_bands["risk_band"] = pd.qcut(
+        validation_results_with_bands["risk_score"].rank(method="first"),
+        q=5,
+        labels=risk_band_labels
+    )
+    validation_risk_band_summary = (
+        validation_results_with_bands
+        .groupby("risk_band", observed=True)
+        .agg(
+            applicant_count=("SK_ID_CURR", "count"),
+            avg_predicted_risk=("risk_score", "mean"),
+            observed_default_rate=("TARGET", "mean"),
+            min_predicted_risk=("risk_score", "min"),
+            max_predicted_risk=("risk_score", "max"),
+        )
+        .reset_index()
+    )
+    validation_risk_band_summary.to_csv(
+        "outputs/reports/validation_risk_band_summary.csv",
+        index=False
+    )
+    print(
+        "Validation risk band summary saved to "
+        "outputs/reports/validation_risk_band_summary.csv"
+    )
+
+    with open("outputs/reports/model_evaluation.json", "w", encoding="utf-8") as f:
+        json.dump(evaluation_metrics, f, indent=2)
+    print("Model evaluation saved to outputs/reports/model_evaluation.json")
+
+    # 5. Predict risk score
+    risk_scores = pd.DataFrame({
+        "SK_ID_CURR": app_train["SK_ID_CURR"],
+        "risk_score": predict(model, X)
+    })
+
     risk_scores["risk_band"] = pd.qcut(
         risk_scores["risk_score"].rank(method="first"),
         q=5,

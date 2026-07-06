@@ -4,6 +4,7 @@
 Week 1 - Pipeline Clean & Reproducibility
 
 ## Latest Update 
+Note: The current risk band summary is generated from model scores across the full prepared `application_train` dataset. It is used as a portfolio-level diagnostic. A validation-only risk band summary is planned as a future evaluation improvement.
 ## Risk Band Summary
 
 Generated:
