@@ -4,31 +4,47 @@
 Week 1 - Pipeline Clean & Reproducibility
 
 ## Latest Update 
-Note: The current risk band summary is generated from model scores across the full prepared `application_train` dataset. It is used as a portfolio-level diagnostic. A validation-only risk band summary is planned as a future evaluation improvement.
-## Risk Band Summary
+## Validation Evaluation Report
 
 Generated:
-- `outputs/reports/risk_band_summary.csv`
+- `outputs/reports/validation_risk_band_summary.csv`
+- `outputs/reports/model_evaluation.json`
 
-The pipeline now assigns each applicant into one of five quantile-based risk bands:
-- Band 1 - Lowest Risk
-- Band 2
-- Band 3
-- Band 4
-- Band 5 - Highest Risk
+Purpose:
+The existing `risk_band_summary.csv` is based on full prepared `application_train` scoring and is used as a portfolio-level diagnostic. To make the evaluation more rigorous, a separate validation-only risk band summary was added using only the validation split used for AUC calculation.
 
-Validation result:
-- Applicant count is evenly distributed across the five bands.
-- Observed default rate increases monotonically across risk bands:
-  - Band 1 - Lowest Risk: 1.36%
-  - Band 2: 2.86%
-  - Band 3: 4.97%
-  - Band 4: 9.00%
-  - Band 5 - Highest Risk: 22.17%
+Validation setup:
+- The model is trained on `X_train` / `y_train`.
+- Validation AUC is calculated on `X_val` / `y_val`.
+- `validation_risk_band_summary.csv` is generated from validation-set predictions only.
+- The existing full-data `risk_scores.csv` and `risk_band_summary.csv` remain unchanged.
+
+Validation risk band result:
+- Validation AUC: 0.7649
+- Observed default rate increases monotonically across validation risk bands:
+  - Band 1 - Lowest Risk: 1.62%
+  - Band 2: 3.05%
+  - Band 3: 5.15%
+  - Band 4: 9.09%
+  - Band 5 - Highest Risk: 21.45%
 
 Interpretation:
-The monotonic increase in observed default rate shows that the model's predicted risk scores can meaningfully rank applicants by credit risk. This turns raw model probabilities into a portfolio-level risk segmentation report that is easier to discuss in a banking analytics context.
-Feature importance observations after Batch 4A:
+The validation-only risk band summary shows that the model can meaningfully rank unseen applicants by credit risk. The monotonic increase in observed default rate across risk bands supports the model's out-of-sample risk ranking ability.
+
+Additional evaluation metrics:
+`model_evaluation.json` now stores validation-level metrics, including:
+- validation AUC
+- precision
+- recall
+- F1 score
+- confusion matrix
+- threshold
+- validation sample size
+
+Note:
+Precision, recall, F1 score, and confusion matrix currently use a baseline threshold of 0.5. Since credit default prediction is an imbalanced classification problem, this threshold is treated as a starting point rather than a final business cutoff.
+
+## Feature importance observations after Batch 4A:
 - `bureau_debt_credit_ratio` ranked 6th, suggesting that external bureau debt burden is a meaningful predictive signal.
 - `n_active_bureau_credits` also appeared in the upper feature ranking, indicating that active external credit exposure contributes to risk prediction.
 - Although Batch 4A only improved AUC from 0.7645 to 0.7649, the new bureau features improved the business completeness of the feature layer by adding external credit history and external debt burden signals.
