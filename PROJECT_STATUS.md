@@ -4,6 +4,37 @@
 Week 1 - Pipeline Clean & Reproducibility
 
 ## Latest Update 
+
+## Validation Threshold Analysis
+
+Generated:
+- `outputs/reports/threshold_analysis.csv`
+
+Purpose:
+The initial model evaluation used a baseline threshold of 0.5. This threshold produced high precision but very low recall because credit default prediction is an imbalanced classification problem and most predicted default probabilities are below 0.5.
+
+The threshold analysis evaluates multiple candidate cutoffs on the validation set:
+- 0.02
+- 0.05
+- 0.08
+- 0.10
+- 0.15
+- 0.20
+- 0.30
+- 0.50
+
+Key observation:
+- Lower thresholds increase recall but flag a much larger share of applicants.
+- Higher thresholds improve precision but miss many true default cases.
+- Among the tested thresholds, `0.15` produced the highest F1 score, with:
+  - predicted positive rate: 13.32%
+  - precision: 25.87%
+  - recall: 42.68%
+  - F1 score: 32.22%
+
+Interpretation:
+The result shows the expected precision-recall trade-off in credit default prediction. A threshold of 0.15 can be treated as a candidate F1-balanced operating point, while the final business cutoff should depend on risk appetite, review capacity, and the relative cost of false positives versus false negatives.
+
 ## Validation Evaluation Report
 
 Generated:

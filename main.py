@@ -312,6 +312,52 @@ def main():
         json.dump(evaluation_metrics, f, indent=2)
     print("Model evaluation saved to outputs/reports/model_evaluation.json")
 
+    threshold_rows = []
+    for threshold in [0.02, 0.05, 0.08, 0.10, 0.15, 0.20, 0.30, 0.50]:
+        y_true = validation_results["TARGET"]
+        y_pred_label = validation_results["risk_score"] >= threshold
+
+        true_positive = int(((y_true == 1) & y_pred_label).sum())
+        false_positive = int(((y_true == 0) & y_pred_label).sum())
+        false_negative = int(((y_true == 1) & ~y_pred_label).sum())
+        true_negative = int(((y_true == 0) & ~y_pred_label).sum())
+
+        precision_denominator = true_positive + false_positive
+        recall_denominator = true_positive + false_negative
+        precision = (
+            true_positive / precision_denominator
+            if precision_denominator > 0
+            else 0
+        )
+        recall = (
+            true_positive / recall_denominator
+            if recall_denominator > 0
+            else 0
+        )
+        f1_denominator = precision + recall
+        f1 = 2 * precision * recall / f1_denominator if f1_denominator > 0 else 0
+
+        predicted_positive_count = int(y_pred_label.sum())
+        threshold_rows.append({
+            "threshold": threshold,
+            "predicted_positive_count": predicted_positive_count,
+            "predicted_positive_rate": predicted_positive_count / len(y_true),
+            "precision": precision,
+            "recall": recall,
+            "f1_score": f1,
+            "true_negative": true_negative,
+            "false_positive": false_positive,
+            "false_negative": false_negative,
+            "true_positive": true_positive,
+        })
+
+    threshold_analysis = pd.DataFrame(threshold_rows)
+    threshold_analysis.to_csv(
+        "outputs/reports/threshold_analysis.csv",
+        index=False
+    )
+    print("Threshold analysis saved to outputs/reports/threshold_analysis.csv")
+
     # 5. Predict risk score
     risk_scores = pd.DataFrame({
         "SK_ID_CURR": app_train["SK_ID_CURR"],
