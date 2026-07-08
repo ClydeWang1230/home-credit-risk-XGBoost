@@ -1,5 +1,19 @@
 # Credit Risk Analytics Pipeline with XGBoost
 
+Week 2 portfolio README v2
+## SQL Analytics Layer
+
+The project includes a DuckDB-based SQL analytics layer for portfolio segmentation.
+
+The SQL layer uses `outputs/sql_reports/risk_analytics_base.csv`, which combines model risk scores with selected applicant profile fields. SQL reports are stored under `sql_queries/` and executed by `src/run_sql_reports.py`.
+
+Current SQL reports include:
+- risk band portfolio summary
+- income type by risk band summary
+- high-risk flag summary using the candidate 0.15 threshold
+
+This layer demonstrates how model outputs can be translated into business-facing risk analytics and portfolio monitoring reports.
+
 Week 1 portfolio README v1
 
 ## Overview
