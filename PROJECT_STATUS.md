@@ -1,5 +1,47 @@
 # Project Status
 
+## SQL Analytics Layer v1
+
+Generated:
+- `outputs/sql_reports/risk_analytics_base.csv`
+- `outputs/sql_reports/01_risk_band_portfolio_summary.csv`
+- `outputs/sql_reports/02_income_type_risk_summary.csv`
+- `outputs/sql_reports/03_high_risk_flag_summary.csv`
+
+SQL files:
+- `sql_queries/01_risk_band_portfolio_summary.sql`
+- `sql_queries/02_income_type_risk_summary.sql`
+- `sql_queries/03_high_risk_flag_summary.sql`
+
+Runner:
+- `src/run_sql_reports.py`
+
+Purpose:
+A SQL analytics layer was added to convert model outputs into portfolio-level business analysis. The base analytics table joins predicted risk scores and risk bands with selected applicant profile fields from `application_train`.
+
+The SQL reports are generated using DuckDB and saved as CSV outputs. This keeps the SQL logic separate from the Python modeling pipeline and makes the reporting layer easier to review and extend.
+
+Reports created:
+
+1. Risk band portfolio summary  
+   This report summarizes applicant count, average risk score, observed default rate, high-risk flag rate, average income, average credit amount, and average annuity by predicted risk band.
+
+2. Income type risk summary  
+   This report segments applicants by `NAME_INCOME_TYPE` and `risk_band`. It helps identify how model risk bands behave across different applicant income categories. A `sample_size_note` and `interpretation_priority` field were added to avoid over-interpreting small-sample segments.
+
+3. High-risk flag summary  
+   This report compares applicants flagged by the candidate threshold `risk_score >= 0.15` against non-flagged applicants.
+
+Key observations:
+- SQL-generated risk band summaries are consistent with the earlier Python risk band reports.
+- Observed default rate increases clearly from low-risk to high-risk bands.
+- The income type segmentation shows that major segments such as Working, Commercial associate, Pensioner, and State servant maintain clear risk separation across bands.
+- Small segments such as Unemployed, Student, Maternity leave, and Businessman should be interpreted cautiously due to limited sample size.
+- The high-risk flag report shows that applicants flagged by the 0.15 threshold have a substantially higher observed default rate than non-flagged applicants.
+
+Interpretation:
+The SQL layer does not replace the ML pipeline. Instead, it extends the project from model training and scoring into portfolio segmentation and business-facing risk analytics.
+
 ## Current Stage
 Week 1 - Pipeline Clean & Reproducibility
 
