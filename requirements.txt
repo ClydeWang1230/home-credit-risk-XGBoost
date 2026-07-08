@@ -3,3 +3,4 @@ scikit-learn
 xgboost
 azure-storage-blob
 python-dotenv
+duckdb

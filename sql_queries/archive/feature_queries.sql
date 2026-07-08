@@ -1,6 +1,11 @@
+-- Archived SQL reference for earlier feature engineering exploration.
+-- This file is not executed by src/run_sql_reports.py.
+-- Current SQL analytics reports are:
+-- 01_risk_band_portfolio_summary.sql
+-- 02_income_type_risk_summary.sql
+-- 03_high_risk_flag_summary.sql
 -- =====================================================
--- SQL Queries for Home Credit Feature Engineering
--- SQLite Compatible Version 
+
 -- =====================================================
 
 -- 1. Past Refusal Count (In Python it's n_prev_refusals)
