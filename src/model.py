@@ -62,7 +62,7 @@ def train_model(df, target_col="TARGET"):
         "validation_sample_size": int(len(y_val)),
     }
 
-    return model, auc, X, validation_results, evaluation_metrics
+    return model, auc, X, validation_results, evaluation_metrics, X_val
 
 
 def predict(model, X):

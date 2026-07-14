@@ -12,6 +12,7 @@ from src.feature_engineering import (
     build_previous_application_features,
 )
 from src.model import train_model, predict
+from src.shap_analysis import generate_local_shap_examples, generate_shap_reports
 
 
 DATA_SOURCE = os.getenv("DATA_SOURCE", "local").lower()
@@ -223,7 +224,9 @@ def main():
     )
 
     # 4. Train model
-    model, auc, X, validation_results, evaluation_metrics = train_model(app_train)
+    model, auc, X, validation_results, evaluation_metrics, X_val = train_model(
+        app_train
+    )
 
     print(f"Validation AUC: {auc:.4f}")
 
@@ -311,6 +314,9 @@ def main():
     with open("outputs/reports/model_evaluation.json", "w", encoding="utf-8") as f:
         json.dump(evaluation_metrics, f, indent=2)
     print("Model evaluation saved to outputs/reports/model_evaluation.json")
+
+    generate_shap_reports(model, X)
+    generate_local_shap_examples(model, X_val, validation_results)
 
     threshold_rows = []
     for threshold in [0.02, 0.05, 0.08, 0.10, 0.15, 0.20, 0.30, 0.50]:

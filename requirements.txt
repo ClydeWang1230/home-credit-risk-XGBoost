@@ -4,3 +4,4 @@ xgboost
 azure-storage-blob
 python-dotenv
 duckdb
+shap

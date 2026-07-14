@@ -1,45 +1,5 @@
 # Credit Risk Analytics Pipeline with XGBoost
 
-Week 2 portfolio README v2
-## SQL Analytics Layer
-
-The project includes a DuckDB-based SQL analytics layer for portfolio segmentation.
-
-The SQL layer uses `outputs/sql_reports/risk_analytics_base.csv`, which combines model risk scores with selected applicant profile fields. SQL reports are stored under `sql_queries/` and executed by `src/run_sql_reports.py`.
-
-Current SQL reports include:
-- risk band portfolio summary
-- income type by risk band summary
-- high-risk flag summary using the candidate 0.15 threshold
-
-This layer demonstrates how model outputs can be translated into business-facing risk analytics and portfolio monitoring reports.
-
-Week 1 portfolio README v1
-
-## Overview
-
-This project is a reproducible, business-oriented credit risk analytics pipeline built from the Home Credit Default Risk dataset. It started as a Kaggle-style notebook project and is being migrated into a modular portfolio project for fintech, banking analytics, credit risk analytics, data analyst, and risk analyst roles.
-
-The goal is not only to improve Kaggle AUC. The focus is to build a clear pipeline that connects credit risk feature engineering, model training, validation, feature importance, and business interpretation.
-
-## Business Problem
-
-Credit risk teams need to estimate the likelihood that an applicant may default while keeping decisions explainable to analysts, lenders, and business stakeholders. This project turns raw application, bureau, and previous-loan history into interpretable borrower-level risk signals and model outputs that support portfolio review and credit decision analysis.
-
-## Current Status
-
-The Week 1 pipeline runs end-to-end in local mode from raw CSV files under `data/raw/`. Azure Blob Storage integration is still available as an optional data source, but local execution is the default.
-
-The pipeline currently:
-
-- Loads `application_train.csv`, `bureau.csv`, and `previous_application.csv`
-- Builds bureau-level applicant features
-- Builds previous-application history features
-- Adds application-level affordability and exposure ratio features
-- Validates one-row-per-applicant historical feature tables before merging
-- Trains an `XGBClassifier`
-- Saves model metrics, model artifacts, risk scores, and a feature importance report
-
 ## Project Structure
 
 ```text
@@ -253,3 +213,61 @@ Future ideas, not yet completed:
 I expanded an original Kaggle-style credit risk notebook into a modular, reproducible analytics pipeline. The project now converts historical one-to-many credit tables into applicant-level risk features, validates merge safety, trains an XGBoost model, saves model artifacts, and produces a business-readable feature importance report.
 
 This project demonstrates practical skills in credit risk modeling, feature engineering, model evaluation, reproducible pipelines, and business interpretation for fintech and banking analytics roles.
+
+
+## Overview
+
+This project is a reproducible, business-oriented credit risk analytics pipeline built from the Home Credit Default Risk dataset. It started as a Kaggle-style notebook project and is being migrated into a modular portfolio project for fintech, banking analytics, credit risk analytics, data analyst, and risk analyst roles.
+
+The goal is not only to improve Kaggle AUC. The focus is to build a clear pipeline that connects credit risk feature engineering, model training, validation, feature importance, and business interpretation.
+
+## Business Problem
+
+Credit risk teams need to estimate the likelihood that an applicant may default while keeping decisions explainable to analysts, lenders, and business stakeholders. This project turns raw application, bureau, and previous-loan history into interpretable borrower-level risk signals and model outputs that support portfolio review and credit decision analysis.
+
+## Week 1 Status
+
+The Week 1 pipeline runs end-to-end in local mode from raw CSV files under `data/raw/`. Azure Blob Storage integration is still available as an optional data source, but local execution is the default.
+
+By the end of Week 1, the pipeline:
+- Loads `application_train.csv`, `bureau.csv`, and `previous_application.csv`
+- Builds bureau-level applicant features
+- Builds previous-application history features
+- Adds application-level affordability and exposure ratio features
+- Validates one-row-per-applicant historical feature tables before merging
+- Trains an `XGBClassifier`
+- Saves model metrics, model artifacts, risk scores, and a feature importance report
+- 
+## Week 2 Progress: SQL Analytics Layer
+
+The project now includes a DuckDB-based SQL analytics layer for portfolio segmentation.
+
+The SQL layer uses `outputs/sql_reports/risk_analytics_base.csv`, which combines model risk scores with selected applicant profile fields.
+
+Current SQL reports include:
+- risk band portfolio summary
+- income type by risk band summary
+- high-risk flag summary using the candidate 0.15 threshold
+
+This layer demonstrates how model outputs can be translated into business-facing risk analytics and portfolio monitoring reports.
+
+## SHAP Explainability Layer
+
+The project includes a SHAP-based explainability layer to interpret the XGBoost credit risk model at both global and feature-dependence levels.
+
+Generated outputs include:
+- `outputs/reports/shap_global_importance.csv`
+- `outputs/plots/shap_summary_bar.png`
+- `outputs/plots/shap_summary_beeswarm.png`
+- SHAP dependence plots for selected engineered credit risk features
+
+Key SHAP findings:
+- External source features are the strongest global predictors.
+- Engineered features such as `credit_goods_ratio`, `credit_annuity_ratio`, `bureau_debt_credit_ratio`, `prev_refusal_rate`, `prev_approval_rate`, and `avg_down_payment_prev` show meaningful model contributions.
+- `prev_refusal_rate` shows a clear positive SHAP relationship with predicted default risk.
+- `prev_approval_rate` generally contributes negatively to predicted default risk as historical approval rate increases.
+- `bureau_debt_credit_ratio` shows a positive SHAP relationship, supporting its interpretation as an external debt burden signal.
+- `avg_down_payment_prev` shows an overall downward SHAP pattern after p99 clipping, suggesting higher historical down payment is associated with lower modeled risk contribution.
+- `credit_annuity_ratio` shows a non-linear SHAP pattern, indicating that repayment structure affects model risk estimates differently across ratio ranges.
+
+This layer helps translate model predictions into business-facing explanations and prepares the project for future local applicant-level explanation, FastAPI scoring, and RAG/Agent analyst workflows.

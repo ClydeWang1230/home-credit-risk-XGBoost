@@ -1,5 +1,82 @@
 # Project Status
 
+## 2026-07-10 — SHAP Explainability Layer v1
+
+### Status
+
+Added a SHAP-based explainability layer for the XGBoost credit risk model.
+
+The current SHAP workflow generates global model explanation outputs and selected feature-level dependence plots. The goal is to explain not only which features are important, but also how key engineered credit risk features contribute to predicted default risk.
+
+### New Outputs
+
+Generated SHAP outputs:
+
+- `outputs/reports/shap_global_importance.csv`
+- `outputs/plots/shap_summary_bar.png`
+- `outputs/plots/shap_summary_beeswarm.png`
+- SHAP dependence plots for selected engineered features
+- Valid-range dependence plots for bounded ratio features
+- p99-clipped dependence plot for `avg_down_payment_prev`
+
+### Global SHAP Findings
+
+The SHAP global importance report shows that the strongest model drivers are:
+
+- `EXT_SOURCE_3`
+- `EXT_SOURCE_2`
+- `EXT_SOURCE_1`
+- `credit_goods_ratio`
+- `credit_annuity_ratio`
+- `bureau_debt_credit_ratio`
+- `AMT_ANNUITY`
+- `DAYS_EMPLOYED`
+- `DAYS_BIRTH`
+- `avg_down_payment_prev`
+- `prev_refusal_rate`
+
+This confirms that the model relies heavily on a combination of external credit score signals, loan structure variables, affordability indicators, bureau debt burden, demographic/employment features, and previous application behavior.
+
+### Engineered Feature SHAP Findings
+
+Several engineered features show meaningful and business-consistent SHAP patterns:
+
+- `prev_refusal_rate` shows a clear positive relationship with predicted default risk after filtering to the valid 0–1 range. Higher historical refusal rate increases the model’s risk contribution.
+- `prev_approval_rate` generally contributes negatively to predicted default risk as historical approval rate increases. This supports the interpretation that stronger historical lender acceptance is associated with lower modeled risk.
+- `bureau_debt_credit_ratio` shows a clear positive SHAP relationship after excluding sentinel missing values. Higher external debt burden relative to credit exposure increases predicted default risk.
+- `credit_goods_ratio` shows a positive non-linear relationship. Higher credit amount relative to goods price tends to increase risk contribution, supporting its interpretation as a financing coverage / borrower self-funding signal.
+- `credit_annuity_ratio` shows a non-linear SHAP pattern rather than a simple monotonic relationship. This suggests repayment structure affects model risk estimates differently across ratio ranges.
+- `avg_down_payment_prev` shows an overall downward SHAP pattern after p99 clipping. Higher historical average down payment tends to receive more negative SHAP contributions, suggesting lower modeled default risk.
+
+### Visualization Hygiene
+
+Some engineered ratio features contained sentinel missing values such as `-1000`, which distorted dependence plot axes.
+
+To improve interpretability, additional valid-range plots were generated for bounded ratio features such as:
+
+- `prev_refusal_rate`
+- `prev_approval_rate`
+- `credit_goods_ratio`
+- `credit_annuity_ratio`
+- `bureau_debt_credit_ratio`
+
+For `avg_down_payment_prev`, large values were not treated as invalid. Instead, an additional p99-clipped dependence plot was created for visualization clarity while keeping the original full-range plot.
+
+### Interpretation Notes
+
+The SHAP results support the business interpretation that the model is not driven only by opaque model mechanics. Several top-ranked engineered features align with credit risk intuition, including historical refusal behavior, external debt burden, financing coverage, repayment structure, and prior down payment capacity.
+
+External source features are the strongest global predictors. However, their internal definitions are not disclosed in the dataset, so they should be interpreted as external credit score signals rather than decomposed into specific economic drivers.
+
+### Next Steps
+
+Planned next steps for the SHAP explainability layer:
+
+Use SHAP outputs later in:
+   - FastAPI applicant-level scoring explanation
+   - RAG / Agent analyst workflow
+   - human review and audit-friendly model interpretation
+
 ## SQL Analytics Layer v1
 
 Generated:
