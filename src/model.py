@@ -48,7 +48,7 @@ def train_model(df, target_col="TARGET"):
         "SK_ID_CURR": df.loc[X_val.index, "SK_ID_CURR"].values,
         "TARGET": y_val.values,
         "risk_score": y_pred,
-    })
+    }, index=X_val.index)
 
     threshold = 0.5
     y_pred_label = (y_pred >= threshold).astype(int)

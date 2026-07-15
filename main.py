@@ -12,6 +12,7 @@ from src.feature_engineering import (
     build_previous_application_features,
 )
 from src.model import train_model, predict
+from src.api_sample_payload import save_sample_predict_payload
 from src.shap_analysis import generate_local_shap_examples, generate_shap_reports
 
 
@@ -256,6 +257,8 @@ def main():
     with open("outputs/models/feature_list.json", "w", encoding="utf-8") as f:
         json.dump(list(X.columns), f, indent=2)
 
+    save_sample_predict_payload(X, validation_results)
+
     feature_importance = pd.DataFrame({
         "feature": X.columns,
         "importance": model.feature_importances_,
@@ -290,6 +293,26 @@ def main():
         q=5,
         labels=risk_band_labels
     )
+    validation_results_with_bands["high_risk_flag_015"] = (
+        validation_results_with_bands["risk_score"] >= 0.15
+    ).astype(int)
+    validation_result_columns = [
+        column
+        for column in [
+            "SK_ID_CURR",
+            "TARGET",
+            "risk_score",
+            "risk_band",
+            "high_risk_flag_015",
+        ]
+        if column in validation_results_with_bands.columns
+    ]
+    validation_results_with_bands[validation_result_columns].to_csv(
+        "outputs/reports/validation_results.csv",
+        index=False
+    )
+    print("Validation results saved to outputs/reports/validation_results.csv")
+
     validation_risk_band_summary = (
         validation_results_with_bands
         .groupby("risk_band", observed=True)
