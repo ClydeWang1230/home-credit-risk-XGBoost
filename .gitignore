@@ -21,3 +21,6 @@ outputs/models/*.pkl
 
 # Word documents
 *.docx
+
+#api audit logs
+outputs/api_logs/*.jsonl
