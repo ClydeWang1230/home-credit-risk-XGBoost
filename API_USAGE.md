@@ -4,7 +4,7 @@
 
 This API exposes the trained Home Credit XGBoost credit risk model through a local FastAPI scoring endpoint.
 
-FastAPI v2 supports model scoring and local applicant-level SHAP explanations. Audit logs and human review workflows will be added in later versions.
+FastAPI v3 supports model scoring, local applicant-level SHAP explanations, a rule-based human review recommendation, and audit-friendly JSONL scoring logs.
 
 ## How to Start the API
 
@@ -78,6 +78,8 @@ For realistic testing, use the generated complete sample payload.
 
 Accepts the same request body as `/predict`, returns the same scoring fields, and adds local applicant-level SHAP explanation drivers.
 
+This endpoint also returns a rule-based human review recommendation and writes an audit-friendly JSONL log entry.
+
 Request body example:
 
 ```json
@@ -110,6 +112,30 @@ Each SHAP driver includes:
 ```
 
 Positive SHAP values increase the model output toward higher predicted default risk. Negative SHAP values decrease the model output toward lower predicted default risk.
+
+The human review recommendation is a lightweight rules layer based on risk score, input quality, and SHAP signal strength. It supports analyst workflow triage, but it does not replace analyst judgment.
+
+Example governance fields:
+
+```json
+{
+  "human_review_recommendation": {
+    "review_required": true,
+    "review_priority": "high",
+    "review_reasons": [
+      "Risk score is above the candidate high-risk threshold.",
+      "Strong positive SHAP risk drivers are present."
+    ]
+  },
+  "audit_log_id": "b9c4f3f4-7c7e-4f5e-8c4d-55d6df4d3b4b"
+}
+```
+
+Audit log path:
+
+```text
+outputs/api_logs/scoring_audit_log.jsonl
+```
 
 ## Complete Sample Payload
 
@@ -167,7 +193,9 @@ The response fields can be interpreted as follows:
 - `high_risk_flag_015` indicates whether the applicant is above the candidate high-risk threshold of 0.15.
 - `threshold_used` records the decision threshold used in this API version for traceability.
 - `missing_feature_count` and `unexpected_feature_count` help validate API input quality before using the prediction for analysis or review.
-- 
+- `human_review_recommendation` summarizes whether the case should be reviewed by an analyst under the current rule set.
+- `audit_log_id` links the response to the JSONL audit log entry.
+
 ## curl Examples
 
 Health check:
@@ -196,14 +224,14 @@ On Windows PowerShell, `curl.exe` may be safer than `curl` because `curl` can be
 
 ## Current Limitations
 
-- FastAPI v1 expects model-ready engineered features.
+- FastAPI v3 expects model-ready engineered features.
 - It does not yet transform raw application, bureau, or previous application tables into model features.
-- It does not yet write audit logs.
-- It does not yet include a human review workflow.
+- The human review recommendation is rule-based and should be treated as decision-support only.
+- The audit log is local JSONL and is not a production database or compliance system.
 - The sample payload is for developer testing, not final end-user interaction.
 
 ## Next Steps
 
-- Add audit-friendly scoring logs.
-- Add human review recommendation logic.
+- Add stronger production logging and monitoring.
+- Add authentication and access control for deployed environments.
 - Later support more user-friendly input formats or batch scoring.

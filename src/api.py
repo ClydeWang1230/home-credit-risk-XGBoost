@@ -1,5 +1,7 @@
 import json
 import pickle
+import uuid
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -167,6 +169,121 @@ def build_shap_driver(row, direction, rank):
     }
 
 
+def build_human_review_recommendation(response: dict) -> dict:
+    review_required = False
+    review_reasons = []
+
+    risk_score = response["risk_score"]
+    missing_feature_count = response["missing_feature_count"]
+    unexpected_feature_count = response["unexpected_feature_count"]
+
+    if risk_score >= THRESHOLD:
+        review_required = True
+        review_reasons.append(
+            "Risk score is above the candidate high-risk threshold."
+        )
+
+    if abs(risk_score - THRESHOLD) <= 0.02:
+        review_required = True
+        review_reasons.append(
+            "Risk score is close to the candidate decision threshold."
+        )
+
+    if missing_feature_count > 0:
+        review_required = True
+        review_reasons.append(
+            "Required model features were missing and filled during scoring."
+        )
+
+    if unexpected_feature_count > 0:
+        review_reasons.append(
+            "Unexpected input features were provided and ignored by the model."
+        )
+
+    positive_shap_sum_top3 = sum(
+        driver["shap_value"]
+        for driver in response.get("top_positive_risk_drivers", [])[:3]
+    )
+    negative_shap_abs_sum_top3 = abs(sum(
+        driver["shap_value"]
+        for driver in response.get("top_negative_risk_drivers", [])[:3]
+    ))
+
+    if positive_shap_sum_top3 >= 0.5:
+        review_required = True
+        review_reasons.append("Strong positive SHAP risk drivers are present.")
+
+    if positive_shap_sum_top3 >= 0.5 and negative_shap_abs_sum_top3 >= 0.1:
+        review_required = True
+        review_reasons.append(
+            "Both risk-increasing and risk-reducing SHAP signals are material."
+        )
+
+    if risk_score >= 0.30 or missing_feature_count > 10:
+        review_priority = "high"
+    elif review_required:
+        review_priority = "medium"
+    else:
+        review_priority = "low"
+
+    if not review_reasons:
+        review_reasons.append(
+            "No major review trigger was identified by the current rule set."
+        )
+
+    return {
+        "review_required": review_required,
+        "review_priority": review_priority,
+        "review_reasons": review_reasons,
+    }
+
+
+def make_json_safe(value):
+    if isinstance(value, dict):
+        return {key: make_json_safe(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [make_json_safe(item) for item in value]
+    if isinstance(value, np.generic):
+        return value.item()
+    return value
+
+
+def write_audit_log(response: dict, endpoint_name: str) -> str:
+    audit_log_id = str(uuid.uuid4())
+    output_dir = PROJECT_ROOT / "outputs" / "api_logs"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    audit_log_path = output_dir / "scoring_audit_log.jsonl"
+
+    audit_entry = {
+        "audit_log_id": audit_log_id,
+        "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+        "endpoint_name": endpoint_name,
+        "model_version": response.get("model_version"),
+        "threshold_used": response.get("threshold_used"),
+        "risk_score": response.get("risk_score"),
+        "risk_band": response.get("risk_band"),
+        "high_risk_flag_015": response.get("high_risk_flag_015"),
+        "missing_feature_count": response.get("missing_feature_count"),
+        "unexpected_feature_count": response.get("unexpected_feature_count"),
+        "top_positive_risk_drivers_preview": response.get(
+            "top_positive_risk_drivers",
+            []
+        )[:3],
+        "top_negative_risk_drivers_preview": response.get(
+            "top_negative_risk_drivers",
+            []
+        )[:3],
+        "human_review_recommendation": response.get(
+            "human_review_recommendation"
+        ),
+    }
+
+    with open(audit_log_path, "a", encoding="utf-8") as f:
+        f.write(json.dumps(make_json_safe(audit_entry)) + "\n")
+
+    return audit_log_id
+
+
 def generate_local_explanation(input_df, top_n=8):
     try:
         explainer = shap.TreeExplainer(model)
@@ -242,6 +359,17 @@ def predict_with_explanation(request: PredictionRequest):
     )
     response = score_aligned_input(input_df, missing_features, unexpected_features)
     response.update(generate_local_explanation(input_df))
+    response["human_review_recommendation"] = build_human_review_recommendation(
+        response
+    )
+    try:
+        response["audit_log_id"] = write_audit_log(
+            response,
+            endpoint_name="predict-with-explanation"
+        )
+    except Exception as exc:
+        response["audit_log_id"] = None
+        response["audit_log_error"] = f"Audit logging failed: {exc}"
     return response
 
 
