@@ -1,0 +1,144 @@
+{
+  "risk_score": 0.7146458029747009,
+  "risk_band": "Band 5 - Highest Risk",
+  "high_risk_flag_015": 1,
+  "threshold_used": 0.15,
+  "model_version": "xgboost_v1",
+  "missing_feature_count": 0,
+  "missing_features_preview": [],
+  "unexpected_feature_count": 0,
+  "unexpected_features_preview": [],
+  "top_positive_risk_drivers": [
+    {
+      "feature": "EXT_SOURCE_3",
+      "feature_value": 0.0744606878956731,
+      "value_status": "actual_value",
+      "shap_value": 0.8916630148887634,
+      "contribution_direction": "positive_risk_drive",
+      "contribution_rank": 1
+    },
+    {
+      "feature": "EXT_SOURCE_2",
+      "feature_value": 0.0887619377448496,
+      "value_status": "actual_value",
+      "shap_value": 0.7685717940330505,
+      "contribution_direction": "positive_risk_drive",
+      "contribution_rank": 2
+    },
+    {
+      "feature": "n_active_bureau_credits",
+      "feature_value": 10,
+      "value_status": "actual_value",
+      "shap_value": 0.46712249517440796,
+      "contribution_direction": "positive_risk_drive",
+      "contribution_rank": 3
+    },
+    {
+      "feature": "prev_refusal_rate",
+      "feature_value": 0.6666666666666666,
+      "value_status": "actual_value",
+      "shap_value": 0.3291352391242981,
+      "contribution_direction": "positive_risk_drive",
+      "contribution_rank": 4
+    },
+    {
+      "feature": "credit_goods_ratio",
+      "feature_value": 1.2112,
+      "value_status": "actual_value",
+      "shap_value": 0.1516973376274109,
+      "contribution_direction": "positive_risk_drive",
+      "contribution_rank": 5
+    },
+    {
+      "feature": "credit_annuity_ratio",
+      "feature_value": 21.45235565001771,
+      "value_status": "actual_value",
+      "shap_value": 0.13727979362010956,
+      "contribution_direction": "positive_risk_drive",
+      "contribution_rank": 6
+    },
+    {
+      "feature": "credit_income_ratio",
+      "feature_value": 17.302857142857142,
+      "value_status": "actual_value",
+      "shap_value": 0.10348662734031677,
+      "contribution_direction": "positive_risk_drive",
+      "contribution_rank": 7
+    },
+    {
+      "feature": "bureau_debt_credit_ratio",
+      "feature_value": 0.5313791882884868,
+      "value_status": "actual_value",
+      "shap_value": 0.090960793197155,
+      "contribution_direction": "positive_risk_drive",
+      "contribution_rank": 8
+    }
+  ],
+  "top_negative_risk_drivers": [
+    {
+      "feature": "DAYS_BIRTH",
+      "feature_value": -21824,
+      "value_status": "actual_value",
+      "shap_value": -0.174474835395813,
+      "contribution_direction": "negative_risk_drive",
+      "contribution_rank": 1
+    },
+    {
+      "feature": "DAYS_ID_PUBLISH",
+      "feature_value": -4819,
+      "value_status": "actual_value",
+      "shap_value": -0.02861502394080162,
+      "contribution_direction": "negative_risk_drive",
+      "contribution_rank": 2
+    },
+    {
+      "feature": "max_credit_prev",
+      "feature_value": 72387,
+      "value_status": "actual_value",
+      "shap_value": -0.02669263444840908,
+      "contribution_direction": "negative_risk_drive",
+      "contribution_rank": 3
+    },
+    {
+      "feature": "FLAG_WORK_PHONE",
+      "feature_value": 0,
+      "value_status": "actual_value",
+      "shap_value": -0.022850409150123596,
+      "contribution_direction": "negative_risk_drive",
+      "contribution_rank": 4
+    },
+    {
+      "feature": "avg_credit_prev",
+      "feature_value": 24129,
+      "value_status": "actual_value",
+      "shap_value": -0.022489488124847412,
+      "contribution_direction": "negative_risk_drive",
+      "contribution_rank": 5
+    },
+    {
+      "feature": "avg_credit_sum",
+      "feature_value": 125134.00714285715,
+      "value_status": "actual_value",
+      "shap_value": -0.011365853250026703,
+      "contribution_direction": "negative_risk_drive",
+      "contribution_rank": 6
+    },
+    {
+      "feature": "HOUR_APPR_PROCESS_START",
+      "feature_value": 7,
+      "value_status": "actual_value",
+      "shap_value": -0.010840797796845436,
+      "contribution_direction": "negative_risk_drive",
+      "contribution_rank": 7
+    },
+    {
+      "feature": "REG_CITY_NOT_LIVE_CITY",
+      "feature_value": 0,
+      "value_status": "actual_value",
+      "shap_value": -0.010007331147789955,
+      "contribution_direction": "negative_risk_drive",
+      "contribution_rank": 8
+    }
+  ],
+  "explanation_note": "Positive SHAP values increase the model output toward higher predicted default risk. Negative SHAP values decrease the model output toward lower predicted default risk."
+}

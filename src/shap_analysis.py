@@ -30,12 +30,19 @@ def generate_shap_reports(
     output_report_dir="outputs/reports",
     output_plot_dir="outputs/plots",
     sample_size=5000,
-    random_state=42
+    random_state=42,
+    overwrite_plots=False
 ):
     output_report_dir = Path(output_report_dir)
     output_plot_dir = Path(output_plot_dir)
     output_report_dir.mkdir(parents=True, exist_ok=True)
     output_plot_dir.mkdir(parents=True, exist_ok=True)
+
+    def should_save_plot(plot_path):
+        if plot_path.exists() and not overwrite_plots:
+            print("Skipping existing plot:", plot_path)
+            return False
+        return True
 
     if len(X) > sample_size:
         X_sample = X.sample(n=sample_size, random_state=random_state)
@@ -58,22 +65,24 @@ def generate_shap_reports(
     shap_global_importance.to_csv(shap_importance_path, index=False)
     print("shap_global_importance.csv saved path:", shap_importance_path)
 
-    shap.summary_plot(
-        shap_values_for_plot,
-        X_sample,
-        plot_type="bar",
-        show=False
-    )
     summary_bar_path = output_plot_dir / "shap_summary_bar.png"
-    plt.savefig(summary_bar_path, bbox_inches="tight")
-    plt.close()
-    print("SHAP plot saved path:", summary_bar_path)
+    if should_save_plot(summary_bar_path):
+        shap.summary_plot(
+            shap_values_for_plot,
+            X_sample,
+            plot_type="bar",
+            show=False
+        )
+        plt.savefig(summary_bar_path, bbox_inches="tight")
+        plt.close()
+        print("SHAP plot saved path:", summary_bar_path)
 
-    shap.summary_plot(shap_values_for_plot, X_sample, show=False)
     summary_beeswarm_path = output_plot_dir / "shap_summary_beeswarm.png"
-    plt.savefig(summary_beeswarm_path, bbox_inches="tight")
-    plt.close()
-    print("SHAP plot saved path:", summary_beeswarm_path)
+    if should_save_plot(summary_beeswarm_path):
+        shap.summary_plot(shap_values_for_plot, X_sample, show=False)
+        plt.savefig(summary_beeswarm_path, bbox_inches="tight")
+        plt.close()
+        print("SHAP plot saved path:", summary_beeswarm_path)
 
     dependence_features = [
         "prev_refusal_rate",
@@ -86,16 +95,17 @@ def generate_shap_reports(
         if feature not in X_sample.columns:
             continue
 
-        shap.dependence_plot(
-            feature,
-            shap_values_for_plot,
-            X_sample,
-            show=False
-        )
         dependence_path = output_plot_dir / f"shap_dependence_{feature}.png"
-        plt.savefig(dependence_path, bbox_inches="tight")
-        plt.close()
-        print("SHAP plot saved path:", dependence_path)
+        if should_save_plot(dependence_path):
+            shap.dependence_plot(
+                feature,
+                shap_values_for_plot,
+                X_sample,
+                show=False
+            )
+            plt.savefig(dependence_path, bbox_inches="tight")
+            plt.close()
+            print("SHAP plot saved path:", dependence_path)
 
     feature = "avg_down_payment_prev"
     if feature in X_sample.columns:
@@ -105,23 +115,24 @@ def generate_shap_reports(
         print(f"{feature} p99 clipped rows kept:", int(p99_mask.sum()))
 
         if p99_mask.sum() > 0:
-            X_sample_p99 = X_sample.loc[p99_mask]
-            shap_values_p99 = shap_values_for_plot[p99_mask.to_numpy()]
-
-            shap.dependence_plot(
-                feature,
-                shap_values_p99,
-                X_sample_p99,
-                show=False
-            )
-            plt.title("SHAP Dependence: avg_down_payment_prev (p99 clipped)")
             p99_dependence_path = (
                 output_plot_dir
                 / "shap_dependence_avg_down_payment_prev_p99_clipped.png"
             )
-            plt.savefig(p99_dependence_path, bbox_inches="tight")
-            plt.close()
-            print("SHAP p99 clipped plot saved path:", p99_dependence_path)
+            if should_save_plot(p99_dependence_path):
+                X_sample_p99 = X_sample.loc[p99_mask]
+                shap_values_p99 = shap_values_for_plot[p99_mask.to_numpy()]
+
+                shap.dependence_plot(
+                    feature,
+                    shap_values_p99,
+                    X_sample_p99,
+                    show=False
+                )
+                plt.title("SHAP Dependence: avg_down_payment_prev (p99 clipped)")
+                plt.savefig(p99_dependence_path, bbox_inches="tight")
+                plt.close()
+                print("SHAP p99 clipped plot saved path:", p99_dependence_path)
 
     filtered_dependence_features = [
         "prev_refusal_rate",
@@ -145,21 +156,22 @@ def generate_shap_reports(
         if valid_range_mask.sum() == 0:
             continue
 
-        X_sample_filtered = X_sample.loc[valid_range_mask]
-        shap_values_filtered = shap_values_for_plot[valid_range_mask.to_numpy()]
-
-        shap.dependence_plot(
-            feature,
-            shap_values_filtered,
-            X_sample_filtered,
-            show=False
-        )
         filtered_dependence_path = (
             output_plot_dir / f"shap_dependence_{feature}_valid_range.png"
         )
-        plt.savefig(filtered_dependence_path, bbox_inches="tight")
-        plt.close()
-        print("SHAP valid-range plot saved path:", filtered_dependence_path)
+        if should_save_plot(filtered_dependence_path):
+            X_sample_filtered = X_sample.loc[valid_range_mask]
+            shap_values_filtered = shap_values_for_plot[valid_range_mask.to_numpy()]
+
+            shap.dependence_plot(
+                feature,
+                shap_values_filtered,
+                X_sample_filtered,
+                show=False
+            )
+            plt.savefig(filtered_dependence_path, bbox_inches="tight")
+            plt.close()
+            print("SHAP valid-range plot saved path:", filtered_dependence_path)
 
     # EXT_SOURCE features are external credit score signals. These valid-range
     # plots exclude sentinel missing values for visualization clarity, but we
@@ -179,20 +191,21 @@ def generate_shap_reports(
         if valid_range_mask.sum() == 0:
             continue
 
-        X_sample_filtered = X_sample.loc[valid_range_mask]
-        shap_values_filtered = shap_values_for_plot[valid_range_mask.to_numpy()]
-
-        shap.dependence_plot(
-            feature,
-            shap_values_filtered,
-            X_sample_filtered,
-            show=False
-        )
-        plt.title(f"SHAP Dependence: {feature} (valid range)")
         ext_source_path = output_plot_dir / f"shap_dependence_{feature}_valid_range.png"
-        plt.savefig(ext_source_path, bbox_inches="tight")
-        plt.close()
-        print("SHAP EXT_SOURCE valid-range plot saved path:", ext_source_path)
+        if should_save_plot(ext_source_path):
+            X_sample_filtered = X_sample.loc[valid_range_mask]
+            shap_values_filtered = shap_values_for_plot[valid_range_mask.to_numpy()]
+
+            shap.dependence_plot(
+                feature,
+                shap_values_filtered,
+                X_sample_filtered,
+                show=False
+            )
+            plt.title(f"SHAP Dependence: {feature} (valid range)")
+            plt.savefig(ext_source_path, bbox_inches="tight")
+            plt.close()
+            print("SHAP EXT_SOURCE valid-range plot saved path:", ext_source_path)
 
 
 def generate_local_shap_examples(
