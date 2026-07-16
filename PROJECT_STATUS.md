@@ -1,5 +1,21 @@
 # Project Status
 
+## Week 3 Progress: FastAPI Scoring and Governance Layer
+
+The trained XGBoost credit risk model is now exposed through a local FastAPI service. This milestone turns the project from an offline modeling pipeline into an explainable scoring service prototype.
+
+Completed API capabilities:
+
+- `GET /health` checks service readiness and confirms model artifacts are loaded.
+- `POST /predict` returns risk score, risk band, high-risk flag, threshold, model version, and input quality checks.
+- `POST /predict-with-explanation` returns local SHAP explanations for applicant-level risk drivers.
+- The API includes a rule-based human review recommendation to support analyst triage.
+- The API writes audit-friendly JSONL logs with model version, score, risk band, top SHAP drivers, and review recommendation.
+
+Runtime audit logs are written to:
+
+- `outputs/api_logs/scoring_audit_log.jsonl`
+
 ## 2026-07-10 — SHAP Explainability Layer v1
 
 ### Status

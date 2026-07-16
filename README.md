@@ -203,10 +203,9 @@ Near-term next steps:
 
 Future ideas, not yet completed:
 
-- SHAP explainability
-- FastAPI scoring endpoint
 - AI-assisted analyst workflow
 - RAG-based credit knowledge retrieval and SQL analytics assistant
+- Production deployment hardening
 
 ## Portfolio Narrative
 
@@ -270,4 +269,37 @@ Key SHAP findings:
 - `avg_down_payment_prev` shows an overall downward SHAP pattern after p99 clipping, suggesting higher historical down payment is associated with lower modeled risk contribution.
 - `credit_annuity_ratio` shows a non-linear SHAP pattern, indicating that repayment structure affects model risk estimates differently across ratio ranges.
 
-This layer helps translate model predictions into business-facing explanations and prepares the project for future local applicant-level explanation, FastAPI scoring, and RAG/Agent analyst workflows.
+This layer helps translate model predictions into business-facing explanations and now supports both offline SHAP reporting and local applicant-level API explanations.
+
+## FastAPI Scoring Service
+
+The trained XGBoost credit risk model is exposed through FastAPI as a local scoring service. The API loads saved model artifacts instead of retraining the model:
+
+- `outputs/models/model.pkl`
+- `outputs/models/feature_list.json`
+
+Current API endpoints:
+
+- `GET /health` checks service and artifact readiness.
+- `POST /predict` performs model-ready feature scoring.
+- `POST /predict-with-explanation` returns scoring results plus local SHAP drivers.
+
+FastAPI v3 adds a lightweight governance layer with rule-based human review recommendation and audit-friendly JSONL logging.
+
+Key API outputs:
+
+- `risk_score`
+- `risk_band`
+- `high_risk_flag_015`
+- `top_positive_risk_drivers`
+- `top_negative_risk_drivers`
+- `human_review_recommendation`
+- `audit_log_id`
+
+Supporting files:
+
+- `API_USAGE.md` contains detailed instructions for running and testing the API.
+- `outputs/api_samples/` contains sample payloads and sample responses for developer testing.
+- `outputs/api_logs/*.jsonl` is ignored because audit logs are runtime artifacts.
+
+This layer upgrades the project from an offline modeling and reporting pipeline into an explainable scoring service prototype suitable for portfolio demonstration.
