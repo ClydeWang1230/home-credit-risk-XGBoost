@@ -3,15 +3,26 @@ import json
 import re
 from pathlib import Path
 
-from agent_memo import (
-    FEATURE_INTERPRETATIONS,
-    PROJECT_ROOT,
-    format_retrieved_context,
-    format_value,
-    load_knowledge_documents,
-    load_sample_response,
-    split_markdown_into_snippets,
-)
+try:
+    from agent_memo import (
+        FEATURE_INTERPRETATIONS,
+        PROJECT_ROOT,
+        format_retrieved_context,
+        format_value,
+        load_knowledge_documents,
+        load_sample_response,
+        split_markdown_into_snippets,
+    )
+except ModuleNotFoundError:
+    from src.agent_memo import (
+        FEATURE_INTERPRETATIONS,
+        PROJECT_ROOT,
+        format_retrieved_context,
+        format_value,
+        load_knowledge_documents,
+        load_sample_response,
+        split_markdown_into_snippets,
+    )
 
 
 DEFAULT_OUTPUT_PATH = (
@@ -157,6 +168,64 @@ def build_question_keywords(question, scoring_response, review_context=None):
     return keywords
 
 
+def normalize_source_name(path):
+    return str(path).replace("\\", "/")
+
+
+def source_weight_for_intent(source_name, intent):
+    source_weights = {
+        "feature_definition": {
+            "docs/DATA_DICTIONARY.md": 5,
+            "SHAP_EXPLAINABILITY_SUMMARY.md": 2,
+        },
+        "risk_drivers": {
+            "SHAP_EXPLAINABILITY_SUMMARY.md": 5,
+            "docs/DATA_DICTIONARY.md": 3,
+        },
+        "high_risk_reason": {
+            "SHAP_EXPLAINABILITY_SUMMARY.md": 4,
+            "docs/DATA_DICTIONARY.md": 3,
+            "API_USAGE.md": 1,
+        },
+        "human_review": {
+            "API_USAGE.md": 4,
+            "docs/DATA_QUALITY_AND_GOVERNANCE.md": 3,
+        },
+        "review_status": {
+            "API_USAGE.md": 4,
+            "docs/DATA_QUALITY_AND_GOVERNANCE.md": 3,
+        },
+        "governance_traceability": {
+            "docs/DATA_QUALITY_AND_GOVERNANCE.md": 5,
+            "docs/DATA_MODEL_AND_LINEAGE.md": 4,
+            "API_USAGE.md": 3,
+        },
+        "data_quality": {
+            "docs/DATA_QUALITY_AND_GOVERNANCE.md": 5,
+            "docs/DATA_DICTIONARY.md": 3,
+        },
+    }
+
+    return source_weights.get(intent, {}).get(source_name, 0)
+
+
+def json_example_penalty(snippet, intent):
+    if intent in {"human_review", "review_status", "governance_traceability"}:
+        return 0
+
+    snippet_lower = snippet.lower()
+    json_patterns = [
+        "```json",
+        '"question":',
+        '"scoring_response":',
+        '\\"question\\"',
+        '\\"scoring_response\\"',
+    ]
+    if any(pattern in snippet_lower for pattern in json_patterns):
+        return 3
+    return 0
+
+
 def retrieve_question_snippets(
     documents,
     question,
@@ -165,19 +234,28 @@ def retrieve_question_snippets(
     max_snippets=6,
 ):
     keywords = build_question_keywords(question, scoring_response, review_context)
+    intent = classify_question_intent(question, scoring_response)
     scored_snippets = []
 
     for document in documents:
+        source_path = document["path"].relative_to(PROJECT_ROOT)
+        source_name = normalize_source_name(source_path)
         for snippet in split_markdown_into_snippets(document["text"]):
             snippet_lower = snippet.lower()
             matched_keywords = [
                 keyword for keyword in keywords if str(keyword).lower() in snippet_lower
             ]
             if matched_keywords:
+                base_score = len(set(matched_keywords))
+                adjusted_score = (
+                    base_score
+                    + source_weight_for_intent(source_name, intent)
+                    - json_example_penalty(snippet, intent)
+                )
                 scored_snippets.append(
                     {
-                        "score": len(set(matched_keywords)),
-                        "source": document["path"].relative_to(PROJECT_ROOT),
+                        "score": max(adjusted_score, 0),
+                        "source": source_path,
                         "text": snippet,
                     }
                 )
@@ -186,11 +264,16 @@ def retrieve_question_snippets(
 
     selected = []
     seen_text = set()
+    source_counts = {}
     for item in scored_snippets:
         compact_text = re.sub(r"\s+", " ", item["text"]).strip()
         if compact_text in seen_text:
             continue
+        source_name = normalize_source_name(item["source"])
+        if source_counts.get(source_name, 0) >= 2:
+            continue
         seen_text.add(compact_text)
+        source_counts[source_name] = source_counts.get(source_name, 0) + 1
         selected.append(item)
         if len(selected) >= max_snippets:
             break

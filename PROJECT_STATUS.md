@@ -1,5 +1,13 @@
 # Project Status
 
+## Week 3 Progress: V4.3 FastAPI Analyst Q&A Endpoint
+
+Added `POST /ask-analyst`, which exposes the V4.2 deterministic analyst Q&A logic through FastAPI.
+
+The endpoint answers one analyst question using an existing scoring response, local SHAP driver fields, local project documentation retrieval, governance fields, and optional human review case context. It remains local and deterministic; LLM-assisted answer generation is planned for V4.4.
+
+The `/ask-analyst` response formatting was refined with structured `answer_sections`, compact `driver_preview`, concise retrieved context previews, and optional markdown output for cleaner Swagger/API consumption.
+
 ## Week 3 Progress: V4.2 Single-Turn Analyst Q&A
 
 Added `src/agent_query.py`, a deterministic single-turn analyst Q&A layer for the existing lightweight RAG-style module.

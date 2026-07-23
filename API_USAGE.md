@@ -221,6 +221,104 @@ outputs/agent_outputs/analyst_question_answer.md
 
 Current V4.2 uses deterministic keyword retrieval and template-based answer generation over the API scoring response, local project documentation, and optional review context. LLM-assisted generation, embeddings, vector databases, and multi-turn conversation are planned for later versions.
 
+## Analyst Q&A Endpoint
+
+FastAPI V4.3 exposes the same deterministic analyst Q&A capability through:
+
+```text
+POST /ask-analyst
+```
+
+The endpoint answers one analyst-style question about an existing scoring response. It does not run a new model prediction.
+
+Request fields:
+
+- `question`: required analyst question.
+- `scoring_response`: optional copied response from `/predict-with-explanation`.
+- `review_case_id`: optional local human review case id.
+- `max_snippets`: number of retrieved documentation snippets, default `6`.
+- `include_markdown_answer`: whether to include the full markdown answer, default `false`.
+
+For normal Swagger testing, keep `include_markdown_answer=false`. The endpoint is designed to return structured JSON for API consumers, and `answer_sections` is the preferred readable response field. Use `markdown_answer` only when a UI wants to render or export Markdown.
+
+Example request using a copied scoring response:
+
+```json
+{
+  "question": "Why is this applicant high risk?",
+  "scoring_response": {
+    "risk_score": 0.7146458029747009,
+    "risk_band": "Band 5 - Highest Risk",
+    "high_risk_flag_015": 1,
+    "threshold_used": 0.15,
+    "model_version": "xgboost_v1",
+    "missing_feature_count": 0,
+    "unexpected_feature_count": 0,
+    "top_positive_risk_drivers": [],
+    "top_negative_risk_drivers": [],
+    "human_review_recommendation": {
+      "review_required": true,
+      "review_priority": "high",
+      "review_reasons": [
+        "Risk score is above the candidate high-risk threshold."
+      ]
+    },
+    "audit_log_id": "example-audit-log-id"
+  }
+}
+```
+
+Example request with review context:
+
+```json
+{
+  "question": "Has this case been reviewed?",
+  "review_case_id": "<review_case_id>"
+}
+```
+
+Example questions:
+
+- "Why is this applicant high risk?"
+- "What does EXT_SOURCE_3 mean?"
+- "Why was this case recommended for human review?"
+- "Has this case been reviewed?"
+- "What does the audit_log_id support?"
+
+Response highlights:
+
+- `detected_intent`
+- `answer_summary`
+- `answer_sections`
+- `markdown_answer`
+- `scoring_evidence`
+- `driver_preview`
+- `review_context_summary`
+- `retrieved_context`
+- `warnings`
+- `limitations`
+
+`answer_sections` includes readable fields such as:
+
+- `short_answer`
+- `key_scoring_points`
+- `human_review_points`
+- `retrieval_notes`
+- `analyst_interpretation`
+
+`retrieved_context` returns compact previews only: `source`, `score`, and a truncated `text_preview`.
+
+For review context, `original_case_status` is the status recorded when the case entered the local review queue. `effective_review_status` reflects the latest analyst decision status when one exists; otherwise it falls back to `original_case_status`.
+
+Current V4.3 limitations:
+
+- Deterministic keyword retrieval.
+- Template-based answer generation.
+- No LLM calls yet.
+- No vector database.
+- No multi-turn memory.
+- Analyst decision support only.
+
 ## Complete Sample Payload
 
 Sample payload:

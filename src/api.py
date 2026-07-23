@@ -11,6 +11,17 @@ import shap
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
+from src.agent_query import (
+    build_short_answer,
+    classify_question_intent,
+    format_value,
+    generate_analyst_answer,
+    load_knowledge_documents,
+    load_review_case_detail as load_agent_review_case_detail,
+    load_sample_response,
+    retrieve_question_snippets,
+)
+
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 MODEL_PATH = PROJECT_ROOT / "outputs" / "models" / "model.pkl"
@@ -36,6 +47,14 @@ class HumanReviewDecisionRequest(BaseModel):
     reviewer: str | None = None
     notes: str | None = None
     status: str = "review_completed"
+
+
+class AnalystQuestionRequest(BaseModel):
+    question: str
+    scoring_response: dict[str, Any] | None = None
+    review_case_id: str | None = None
+    max_snippets: int = 6
+    include_markdown_answer: bool = False
 
 
 def load_model():
@@ -496,6 +515,174 @@ def write_human_review_decision(
     return decision_entry
 
 
+def build_ask_analyst_scoring_evidence(scoring_response: dict) -> dict:
+    recommendation = scoring_response.get("human_review_recommendation", {}) or {}
+    return {
+        "risk_score": scoring_response.get("risk_score"),
+        "risk_band": scoring_response.get("risk_band"),
+        "high_risk_flag_015": scoring_response.get("high_risk_flag_015"),
+        "threshold_used": scoring_response.get("threshold_used"),
+        "model_version": scoring_response.get("model_version"),
+        "audit_log_id": scoring_response.get("audit_log_id"),
+        "review_required": recommendation.get("review_required"),
+        "review_priority": recommendation.get("review_priority"),
+    }
+
+
+def build_ask_analyst_review_context_summary(
+    review_context: dict | None,
+) -> dict | None:
+    if not review_context or review_context.get("not_found"):
+        return None
+
+    review_case = review_context.get("review_case") or {}
+    latest_decision = review_context.get("latest_decision") or {}
+    decision_history = review_context.get("decision_history", []) or []
+    original_case_status = review_case.get("status")
+    latest_review_status = latest_decision.get("status")
+    effective_review_status = latest_review_status or original_case_status
+
+    return {
+        "review_case_id": review_context.get("review_case_id"),
+        "original_case_status": original_case_status,
+        "effective_review_status": effective_review_status,
+        "latest_review_status": latest_review_status,
+        "latest_review_decision": latest_decision.get("review_decision"),
+        "latest_review_updated_at": latest_decision.get("updated_at_utc"),
+        "decision_history_count": len(decision_history),
+        "linked_audit_log_available": review_context.get("linked_audit_log")
+        is not None,
+    }
+
+
+def build_retrieved_context_preview(snippets: list[dict]) -> list[dict]:
+    retrieved_context = []
+    for snippet in snippets:
+        text_preview = " ".join(str(snippet.get("text", "")).split())
+        if len(text_preview) > 320:
+            text_preview = text_preview[:317].rstrip() + "..."
+        retrieved_context.append(
+            {
+                "source": str(snippet.get("source")),
+                "score": snippet.get("score"),
+                "text_preview": text_preview,
+            }
+    )
+    return retrieved_context
+
+
+def build_driver_preview(scoring_response: dict, limit: int = 3) -> dict:
+    def rounded_shap_value(value):
+        if value is None:
+            return None
+        try:
+            return round(float(value), 6)
+        except (TypeError, ValueError):
+            return None
+
+    def compact_drivers(driver_key: str) -> list[dict]:
+        drivers = scoring_response.get(driver_key, []) or []
+        return [
+            {
+                "feature": driver.get("feature"),
+                "shap_value": rounded_shap_value(driver.get("shap_value")),
+            }
+            for driver in drivers[:limit]
+        ]
+
+    return {
+        "top_positive_features": compact_drivers("top_positive_risk_drivers"),
+        "top_negative_features": compact_drivers("top_negative_risk_drivers"),
+    }
+
+
+def ask_analyst_warnings(
+    used_default_response: bool,
+    review_case_id: str | None,
+    review_context: dict | None,
+) -> list[str]:
+    warnings = []
+    if used_default_response:
+        warnings.append(
+            "No scoring_response was provided; default sample response was used."
+        )
+    if not review_case_id:
+        warnings.append(
+            "No review_case_id was provided, so review workflow context was not loaded."
+        )
+    elif review_context and review_context.get("not_found"):
+        warnings.append(
+            "The provided review_case_id was not found in local JSONL logs."
+        )
+    return warnings
+
+
+def ask_analyst_limitations(review_context: dict | None) -> list[str]:
+    limitations = [
+        "This endpoint uses deterministic keyword retrieval and template-based answer generation.",
+        "It does not use an LLM, vector database, or multi-turn conversation memory.",
+        "The output is analyst decision support, not automated credit approval or rejection.",
+    ]
+    if review_context and review_context.get("not_found"):
+        limitations.append(
+            "The provided review_case_id was not found in the local review case log."
+        )
+    return limitations
+
+
+def build_key_scoring_points(scoring_evidence: dict) -> list[str]:
+    return [
+        f"risk_score: {format_value(scoring_evidence.get('risk_score'))}",
+        f"risk_band: {scoring_evidence.get('risk_band')}",
+        f"threshold_used: {format_value(scoring_evidence.get('threshold_used'))}",
+        f"review_required: {scoring_evidence.get('review_required')}",
+        f"review_priority: {scoring_evidence.get('review_priority')}",
+    ]
+
+
+def build_human_review_points(review_context_summary: dict | None) -> list[str]:
+    if not review_context_summary:
+        return ["No human review case context was loaded."]
+
+    return [
+        f"review_case_id: {review_context_summary.get('review_case_id')}",
+        f"original_case_status: {review_context_summary.get('original_case_status')}",
+        f"effective_review_status: {review_context_summary.get('effective_review_status')}",
+        f"latest_review_status: {review_context_summary.get('latest_review_status')}",
+        f"latest_review_decision: {review_context_summary.get('latest_review_decision')}",
+        f"latest_review_updated_at: {review_context_summary.get('latest_review_updated_at')}",
+        f"decision_history_count: {review_context_summary.get('decision_history_count')}",
+    ]
+
+
+def build_retrieval_notes(snippets: list[dict]) -> list[str]:
+    if not snippets:
+        return ["No local documentation snippets were retrieved."]
+
+    return [
+        f"Retrieved {len(snippets)} local documentation snippets.",
+        f"Top source: {snippets[0].get('source')}",
+    ]
+
+
+def build_answer_sections(
+    answer_summary: str,
+    scoring_evidence: dict,
+    review_context_summary: dict | None,
+    snippets: list[dict],
+) -> dict:
+    return {
+        "short_answer": answer_summary,
+        "key_scoring_points": build_key_scoring_points(scoring_evidence),
+        "human_review_points": build_human_review_points(review_context_summary),
+        "retrieval_notes": build_retrieval_notes(snippets),
+        "analyst_interpretation": (
+            "This response is analyst decision support and should not be treated "
+            "as automated approval or rejection."
+        ),
+    }
+
+
 def generate_local_explanation(input_df, top_n=8):
     try:
         explainer = shap.TreeExplainer(model)
@@ -593,6 +780,84 @@ def predict_with_explanation(request: PredictionRequest):
             f"Human review case creation failed: {exc}"
         )
     return response
+
+
+@app.post("/ask-analyst")
+def ask_analyst(request: AnalystQuestionRequest):
+    question = request.question.strip()
+    if not question:
+        raise HTTPException(
+            status_code=400,
+            detail="Question must not be empty.",
+        )
+
+    if request.scoring_response is not None:
+        scoring_response = request.scoring_response
+        response_source = "request.scoring_response"
+        used_default_response = False
+    else:
+        scoring_response, response_path = load_sample_response()
+        response_source = str(response_path)
+        used_default_response = True
+
+    review_context = None
+    if request.review_case_id:
+        review_context = load_agent_review_case_detail(request.review_case_id)
+
+    documents = load_knowledge_documents()
+    snippets = retrieve_question_snippets(
+        documents,
+        question,
+        scoring_response,
+        review_context=review_context,
+        max_snippets=request.max_snippets,
+    )
+    detected_intent = classify_question_intent(question, scoring_response)
+    markdown_answer = generate_analyst_answer(
+        question,
+        scoring_response,
+        snippets,
+        review_context=review_context,
+    )
+    answer_summary = build_short_answer(
+        detected_intent,
+        question,
+        scoring_response,
+        review_context=review_context,
+    )
+    scoring_evidence = build_ask_analyst_scoring_evidence(scoring_response)
+    review_context_summary = build_ask_analyst_review_context_summary(
+        review_context
+    )
+
+    return {
+        "question": question,
+        "detected_intent": detected_intent,
+        "answer_summary": answer_summary,
+        "answer_sections": build_answer_sections(
+            answer_summary,
+            scoring_evidence,
+            review_context_summary,
+            snippets,
+        ),
+        "markdown_answer": markdown_answer
+        if request.include_markdown_answer
+        else None,
+        "scoring_response_source": response_source,
+        "scoring_evidence": scoring_evidence,
+        "driver_preview": build_driver_preview(scoring_response),
+        "review_context_loaded": bool(
+            review_context and not review_context.get("not_found")
+        ),
+        "review_context_summary": review_context_summary,
+        "retrieved_context": build_retrieved_context_preview(snippets),
+        "warnings": ask_analyst_warnings(
+            used_default_response,
+            request.review_case_id,
+            review_context,
+        ),
+        "limitations": ask_analyst_limitations(review_context),
+    }
 
 
 @app.get("/human-review/queue")
