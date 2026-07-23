@@ -1,5 +1,33 @@
 # Project Status
 
+## Week 3 Progress: V4.2 Single-Turn Analyst Q&A
+
+Added `src/agent_query.py`, a deterministic single-turn analyst Q&A layer for the existing lightweight RAG-style module.
+
+The script answers one analyst question using the sample API scoring response, local project documentation retrieval, SHAP driver fields, governance fields, and optional human review case context when a `review_case_id` is provided. It writes the answer to `outputs/agent_outputs/analyst_question_answer.md`.
+
+This V4.2 layer is local and template-based. It does not use LLM calls, embeddings, vector databases, LangChain, LlamaIndex, or multi-turn orchestration.
+
+## Week 3 Progress: Lightweight RAG / Agent Memo MVP
+
+Added a lightweight analyst-facing memo generator in `src/agent_memo.py`. The script reads a sample API scoring response, retrieves relevant snippets from local project documentation, and generates a credit risk review memo under `outputs/agent_outputs/`.
+
+This MVP uses local markdown documentation and simple keyword-based retrieval. It is designed as a portfolio-ready analyst workflow prototype, not a production LLM or vector database system.
+
+## Week 3 Progress: FastAPI V3.1 Human Review Workflow
+
+Added a lightweight human review workflow to the FastAPI layer while preserving the V4.0 agent memo module.
+
+New API workflow capabilities:
+
+- `/predict-with-explanation` creates a review case when the rule-based recommendation requires analyst review.
+- `GET /human-review/queue` returns a concise overview list of local review cases, with optional status filtering.
+- `GET /human-review/{review_case_id}` remains the detailed investigation endpoint with decision history and linked scoring audit context.
+- `POST /human-review/{review_case_id}/decision` appends a reviewer decision for a selected case.
+- Review cases and review decisions are stored as local JSONL runtime artifacts under `outputs/api_logs/`.
+
+This V3.1 workflow is intended for portfolio-ready governance demonstration. It is not a production case-management system.
+
 ## Week 3 Progress: FastAPI Scoring and Governance Layer
 
 The trained XGBoost credit risk model is now exposed through a local FastAPI service. This milestone turns the project from an offline modeling pipeline into an explainable scoring service prototype.

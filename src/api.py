@@ -18,6 +18,10 @@ FEATURE_LIST_PATH = PROJECT_ROOT / "outputs" / "models" / "feature_list.json"
 RISK_BAND_SUMMARY_PATH = (
     PROJECT_ROOT / "outputs" / "reports" / "risk_band_summary.csv"
 )
+API_LOG_DIR = PROJECT_ROOT / "outputs" / "api_logs"
+SCORING_AUDIT_LOG_PATH = API_LOG_DIR / "scoring_audit_log.jsonl"
+HUMAN_REVIEW_CASE_LOG_PATH = API_LOG_DIR / "human_review_cases.jsonl"
+HUMAN_REVIEW_DECISION_LOG_PATH = API_LOG_DIR / "human_review_decisions.jsonl"
 THRESHOLD = 0.15
 MODEL_VERSION = "xgboost_v1"
 
@@ -25,6 +29,13 @@ MODEL_VERSION = "xgboost_v1"
 class PredictionRequest(BaseModel):
     features: dict[str, Any]
     strict: bool = False
+
+
+class HumanReviewDecisionRequest(BaseModel):
+    review_decision: str
+    reviewer: str | None = None
+    notes: str | None = None
+    status: str = "review_completed"
 
 
 def load_model():
@@ -248,11 +259,28 @@ def make_json_safe(value):
     return value
 
 
+def append_jsonl(path: Path, entry: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "a", encoding="utf-8") as f:
+        f.write(json.dumps(make_json_safe(entry)) + "\n")
+
+
+def read_jsonl(path: Path) -> list[dict]:
+    if not path.exists():
+        return []
+
+    records = []
+    with open(path, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            records.append(json.loads(line))
+    return records
+
+
 def write_audit_log(response: dict, endpoint_name: str) -> str:
     audit_log_id = str(uuid.uuid4())
-    output_dir = PROJECT_ROOT / "outputs" / "api_logs"
-    output_dir.mkdir(parents=True, exist_ok=True)
-    audit_log_path = output_dir / "scoring_audit_log.jsonl"
 
     audit_entry = {
         "audit_log_id": audit_log_id,
@@ -278,10 +306,194 @@ def write_audit_log(response: dict, endpoint_name: str) -> str:
         ),
     }
 
-    with open(audit_log_path, "a", encoding="utf-8") as f:
-        f.write(json.dumps(make_json_safe(audit_entry)) + "\n")
+    append_jsonl(SCORING_AUDIT_LOG_PATH, audit_entry)
 
     return audit_log_id
+
+
+def create_human_review_case(response: dict, endpoint_name: str) -> dict | None:
+    recommendation = response.get("human_review_recommendation", {})
+    if not recommendation.get("review_required"):
+        return None
+
+    review_case = {
+        "review_case_id": str(uuid.uuid4()),
+        "created_at_utc": datetime.now(timezone.utc).isoformat(),
+        "status": "pending_review",
+        "endpoint_name": endpoint_name,
+        "audit_log_id": response.get("audit_log_id"),
+        "model_version": response.get("model_version"),
+        "risk_score": response.get("risk_score"),
+        "risk_band": response.get("risk_band"),
+        "high_risk_flag_015": response.get("high_risk_flag_015"),
+        "threshold_used": response.get("threshold_used"),
+        "review_priority": recommendation.get("review_priority"),
+        "review_reasons": recommendation.get("review_reasons", []),
+        "missing_feature_count": response.get("missing_feature_count"),
+        "unexpected_feature_count": response.get("unexpected_feature_count"),
+        "top_positive_risk_drivers_preview": response.get(
+            "top_positive_risk_drivers",
+            []
+        )[:3],
+        "top_negative_risk_drivers_preview": response.get(
+            "top_negative_risk_drivers",
+            []
+        )[:3],
+    }
+    append_jsonl(HUMAN_REVIEW_CASE_LOG_PATH, review_case)
+    return {
+        "review_case_id": review_case["review_case_id"],
+        "status": review_case["status"],
+        "review_priority": review_case["review_priority"],
+    }
+
+
+def latest_review_decisions_by_case() -> dict[str, dict]:
+    decisions = read_jsonl(HUMAN_REVIEW_DECISION_LOG_PATH)
+    latest_decisions = {}
+    for decision in decisions:
+        latest_decisions[decision.get("review_case_id")] = decision
+    return latest_decisions
+
+
+def build_review_queue_item(
+    review_case: dict,
+    latest_decision: dict | None,
+    case_number: int,
+) -> dict:
+    visible_status = review_case.get("status", "pending_review")
+    latest_review_status = None
+    latest_review_decision = None
+    latest_review_updated_at = None
+
+    if latest_decision:
+        latest_review_status = latest_decision.get("status")
+        latest_review_decision = latest_decision.get("review_decision")
+        latest_review_updated_at = latest_decision.get("updated_at_utc")
+        visible_status = latest_review_status or visible_status
+
+    risk_band = review_case.get("risk_band")
+    review_priority = review_case.get("review_priority")
+    case_label = (
+        f"Case {case_number} | {risk_band} | "
+        f"{review_priority} | {visible_status}"
+    )
+
+    return {
+        "case_number": case_number,
+        "case_label": case_label,
+        "review_case_id": review_case.get("review_case_id"),
+        "created_at_utc": review_case.get("created_at_utc"),
+        "status": visible_status,
+        "risk_score": review_case.get("risk_score"),
+        "risk_band": risk_band,
+        "review_priority": review_priority,
+        "audit_log_id": review_case.get("audit_log_id"),
+        "latest_review_status": latest_review_status,
+        "latest_review_decision": latest_review_decision,
+        "latest_review_updated_at": latest_review_updated_at,
+    }
+
+
+def get_human_review_queue(status: str | None = None) -> list[dict]:
+    cases = read_jsonl(HUMAN_REVIEW_CASE_LOG_PATH)
+    latest_decisions = latest_review_decisions_by_case()
+    cases = sorted(
+        cases,
+        key=lambda review_case: review_case.get("created_at_utc") or "",
+        reverse=True,
+    )
+    filtered_cases = []
+
+    for review_case in cases:
+        case_id = review_case.get("review_case_id")
+        latest_decision = latest_decisions.get(case_id)
+        visible_status = review_case.get("status", "pending_review")
+        if latest_decision:
+            visible_status = latest_decision.get(
+                "status",
+                visible_status,
+            )
+
+        if status and visible_status != status:
+            continue
+        filtered_cases.append((review_case, latest_decision))
+
+    return [
+        build_review_queue_item(review_case, latest_decision, case_number)
+        for case_number, (review_case, latest_decision) in enumerate(
+            filtered_cases,
+            start=1,
+        )
+    ]
+
+
+def get_human_review_case_detail(review_case_id: str) -> dict:
+    matching_cases = [
+        review_case
+        for review_case in read_jsonl(HUMAN_REVIEW_CASE_LOG_PATH)
+        if review_case.get("review_case_id") == review_case_id
+    ]
+    if not matching_cases:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Human review case not found: {review_case_id}",
+        )
+
+    review_case = matching_cases[-1]
+    decision_history = [
+        decision
+        for decision in read_jsonl(HUMAN_REVIEW_DECISION_LOG_PATH)
+        if decision.get("review_case_id") == review_case_id
+    ]
+    latest_decision = decision_history[-1] if decision_history else None
+
+    audit_log_id = review_case.get("audit_log_id")
+    linked_audit_log = None
+    if audit_log_id:
+        matching_audit_logs = [
+            audit_log
+            for audit_log in read_jsonl(SCORING_AUDIT_LOG_PATH)
+            if audit_log.get("audit_log_id") == audit_log_id
+        ]
+        if matching_audit_logs:
+            linked_audit_log = matching_audit_logs[-1]
+
+    return {
+        "review_case_id": review_case_id,
+        "review_case": review_case,
+        "latest_decision": latest_decision,
+        "decision_history": decision_history,
+        "linked_audit_log": linked_audit_log,
+    }
+
+
+def write_human_review_decision(
+    review_case_id: str,
+    decision_request: HumanReviewDecisionRequest,
+) -> dict:
+    matching_cases = [
+        review_case
+        for review_case in read_jsonl(HUMAN_REVIEW_CASE_LOG_PATH)
+        if review_case.get("review_case_id") == review_case_id
+    ]
+    if not matching_cases:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Human review case not found: {review_case_id}",
+        )
+
+    decision_entry = {
+        "review_decision_id": str(uuid.uuid4()),
+        "review_case_id": review_case_id,
+        "updated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "status": decision_request.status,
+        "review_decision": decision_request.review_decision,
+        "reviewer": decision_request.reviewer,
+        "notes": decision_request.notes,
+    }
+    append_jsonl(HUMAN_REVIEW_DECISION_LOG_PATH, decision_entry)
+    return decision_entry
 
 
 def generate_local_explanation(input_df, top_n=8):
@@ -370,7 +582,40 @@ def predict_with_explanation(request: PredictionRequest):
     except Exception as exc:
         response["audit_log_id"] = None
         response["audit_log_error"] = f"Audit logging failed: {exc}"
+    try:
+        response["human_review_case"] = create_human_review_case(
+            response,
+            endpoint_name="predict-with-explanation"
+        )
+    except Exception as exc:
+        response["human_review_case"] = None
+        response["human_review_case_error"] = (
+            f"Human review case creation failed: {exc}"
+        )
     return response
+
+
+@app.get("/human-review/queue")
+def human_review_queue(status: str | None = None):
+    cases = get_human_review_queue(status=status)
+    return {
+        "case_count": len(cases),
+        "status_filter": status,
+        "cases": cases,
+    }
+
+
+@app.get("/human-review/{review_case_id}")
+def human_review_case_detail(review_case_id: str):
+    return get_human_review_case_detail(review_case_id)
+
+
+@app.post("/human-review/{review_case_id}/decision")
+def human_review_decision(
+    review_case_id: str,
+    request: HumanReviewDecisionRequest,
+):
+    return write_human_review_decision(review_case_id, request)
 
 
 # Run with:
