@@ -21,6 +21,8 @@ from src.agent_query import (
     load_sample_response,
     retrieve_question_snippets,
 )
+from src.llm_assistant import generate_llm_answer
+from src.llm_assistant import get_default_llm_model
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -55,6 +57,11 @@ class AnalystQuestionRequest(BaseModel):
     review_case_id: str | None = None
     max_snippets: int = 6
     include_markdown_answer: bool = False
+    use_llm: bool = False
+    llm_model: str | None = None
+    llm_temperature: float = 0.2
+    llm_max_context_snippets: int = 6
+    llm_style: str = "analyst"
 
 
 def load_model():
@@ -617,6 +624,19 @@ def ask_analyst_warnings(
     return warnings
 
 
+def select_llm_model(requested_model: str | None) -> tuple[str, list[str]]:
+    warnings = []
+    if requested_model is not None:
+        requested_model = requested_model.strip()
+        if requested_model:
+            return requested_model, warnings
+        warnings.append(
+            "Requested llm_model was empty; default LLM model configuration was used."
+        )
+
+    return get_default_llm_model(), warnings
+
+
 def ask_analyst_limitations(review_context: dict | None) -> list[str]:
     limitations = [
         "This endpoint uses deterministic keyword retrieval and template-based answer generation.",
@@ -829,6 +849,42 @@ def ask_analyst(request: AnalystQuestionRequest):
     review_context_summary = build_ask_analyst_review_context_summary(
         review_context
     )
+    driver_preview = build_driver_preview(scoring_response)
+    retrieved_context = build_retrieved_context_preview(snippets)
+    warnings = ask_analyst_warnings(
+        used_default_response,
+        request.review_case_id,
+        review_context,
+    )
+    selected_llm_model, llm_model_warnings = select_llm_model(
+        request.llm_model
+    )
+    warnings.extend(llm_model_warnings)
+    limitations = ask_analyst_limitations(review_context)
+
+    llm_result = {
+        "llm_enabled": False,
+        "llm_answer": None,
+        "llm_model": None,
+        "llm_warnings": [],
+    }
+    if request.use_llm:
+        llm_context = retrieved_context[: request.llm_max_context_snippets]
+        llm_result = generate_llm_answer(
+            question=question,
+            detected_intent=detected_intent,
+            scoring_evidence=scoring_evidence,
+            driver_preview=driver_preview,
+            review_context_summary=review_context_summary,
+            retrieved_context=llm_context,
+            limitations=limitations,
+            temperature=request.llm_temperature,
+            llm_style=request.llm_style,
+            model=selected_llm_model,
+        )
+        llm_result["llm_warnings"].extend(llm_model_warnings)
+
+    answer_mode = "llm_assisted" if llm_result["llm_enabled"] else "deterministic"
 
     return {
         "question": question,
@@ -845,18 +901,19 @@ def ask_analyst(request: AnalystQuestionRequest):
         else None,
         "scoring_response_source": response_source,
         "scoring_evidence": scoring_evidence,
-        "driver_preview": build_driver_preview(scoring_response),
+        "driver_preview": driver_preview,
         "review_context_loaded": bool(
             review_context and not review_context.get("not_found")
         ),
         "review_context_summary": review_context_summary,
-        "retrieved_context": build_retrieved_context_preview(snippets),
-        "warnings": ask_analyst_warnings(
-            used_default_response,
-            request.review_case_id,
-            review_context,
-        ),
-        "limitations": ask_analyst_limitations(review_context),
+        "retrieved_context": retrieved_context,
+        "warnings": warnings,
+        "limitations": limitations,
+        "answer_mode": answer_mode,
+        "llm_enabled": llm_result["llm_enabled"],
+        "llm_answer": llm_result["llm_answer"],
+        "llm_model": llm_result["llm_model"],
+        "llm_warnings": llm_result["llm_warnings"],
     }
 
 

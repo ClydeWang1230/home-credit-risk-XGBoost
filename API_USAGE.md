@@ -319,6 +319,66 @@ Current V4.3 limitations:
 - No multi-turn memory.
 - Analyst decision support only.
 
+## LLM-Assisted Analyst Q&A
+
+V4.4 adds optional LLM-assisted answer generation to `POST /ask-analyst`.
+
+LLM mode is disabled by default. When `use_llm=false`, the endpoint returns the deterministic V4.3 response. When `use_llm=true`, the endpoint attempts to generate an additional grounded analyst-style answer while still returning the deterministic structured fields.
+
+Environment variables:
+
+```text
+OPENAI_API_KEY
+OPENAI_MODEL
+```
+
+No API key is committed to the repository. If `OPENAI_API_KEY` is missing, the OpenAI package is unavailable, or the LLM call fails, the endpoint falls back to deterministic output and returns a warning.
+
+Deterministic request:
+
+```json
+{
+  "question": "Why is this applicant high risk?",
+  "include_markdown_answer": false,
+  "use_llm": false
+}
+```
+
+LLM-assisted request:
+
+```json
+{
+  "question": "Why is this applicant high risk?",
+  "max_snippets": 6,
+  "include_markdown_answer": false,
+  "use_llm": true
+}
+```
+
+LLM-assisted request with review context:
+
+```json
+{
+  "question": "Has this case been reviewed and what should the analyst watch?",
+  "review_case_id": "example-review-case-id",
+  "max_snippets": 6,
+  "include_markdown_answer": false,
+  "use_llm": true
+}
+```
+
+LLM response fields:
+
+- `answer_mode`: `deterministic` or `llm_assisted`
+- `llm_enabled`
+- `llm_answer`
+- `llm_model`
+- `llm_warnings`
+
+Optional request field `llm_model` can override `OPENAI_MODEL` for a single request. If `llm_model` is empty, the endpoint falls back to the default LLM model configuration and returns a warning.
+
+The LLM prompt is grounded in the scoring response, SHAP driver preview, human review context, and retrieved project documentation snippets. It is not a credit approval decision and should be treated as analyst decision support only.
+
 ## Complete Sample Payload
 
 Sample payload:

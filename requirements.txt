@@ -7,3 +7,4 @@ duckdb
 shap
 fastapi
 uvicorn
+openai

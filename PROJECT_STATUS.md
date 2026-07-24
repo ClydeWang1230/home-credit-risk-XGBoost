@@ -1,10 +1,18 @@
 # Project Status
 
+## Week 3 Progress: V4.4 Optional LLM-Assisted Analyst Q&A
+
+Added optional LLM-assisted answer generation to `POST /ask-analyst`.
+
+The endpoint now supports deterministic and LLM-assisted modes. Deterministic `answer_summary`, `answer_sections`, scoring evidence, driver previews, review context, retrieved context, warnings, and limitations remain available as audit-friendly fallback fields.
+
+LLM mode is opt-in through `use_llm=true` and uses environment variables such as `OPENAI_API_KEY` and `OPENAI_MODEL`. If configuration or the LLM call fails, the endpoint falls back to deterministic V4.3 output without failing the request.
+
 ## Week 3 Progress: V4.3 FastAPI Analyst Q&A Endpoint
 
 Added `POST /ask-analyst`, which exposes the V4.2 deterministic analyst Q&A logic through FastAPI.
 
-The endpoint answers one analyst question using an existing scoring response, local SHAP driver fields, local project documentation retrieval, governance fields, and optional human review case context. It remains local and deterministic; LLM-assisted answer generation is planned for V4.4.
+The endpoint answers one analyst question using an existing scoring response, local SHAP driver fields, local project documentation retrieval, governance fields, and optional human review case context. In V4.3 this behavior was deterministic; V4.4 added optional LLM-assisted generation on top of the same structured evidence.
 
 The `/ask-analyst` response formatting was refined with structured `answer_sections`, compact `driver_preview`, concise retrieved context previews, and optional markdown output for cleaner Swagger/API consumption.
 
