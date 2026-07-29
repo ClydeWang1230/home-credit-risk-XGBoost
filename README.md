@@ -1,50 +1,205 @@
-# Credit Risk Analytics Pipeline with XGBoost
+# Home Credit Risk Decision-Support System
 
-## Project Structure
+An end-to-end credit risk decision-support system using Python, XGBoost, SHAP, FastAPI, audit logging, human review workflow, and an LLM-assisted RAG-style analyst assistant.
+
+This project started from the Home Credit Default Risk dataset and evolved from a Kaggle-style modeling prototype into a portfolio-grade credit risk analytics and decision-support system. The focus is not only model AUC, but also reproducibility, explainability, data quality, governance traceability, API design, and analyst usability.
+
+Current milestone: V4.4, with deterministic analyst Q&A and optional LLM-assisted answer generation through `/ask-analyst`.
+
+## Why This Project Matters
+
+Credit risk analytics work does not stop at model training. A useful risk system needs reliable feature engineering, explainable scoring, clear thresholds, traceable decisions, analyst review support, and documentation that data and risk teams can understand.
+
+This project demonstrates skills relevant to Data Analyst, Data Technology, Banking Analytics, FinTech Analytics, and Risk Analytics roles:
+
+- Translating raw one-to-many credit history tables into applicant-level model features.
+- Training and evaluating a default risk model.
+- Explaining model behavior with global and local SHAP outputs.
+- Serving model-ready scoring through FastAPI.
+- Capturing input quality checks, audit logs, and review recommendations.
+- Supporting analyst interpretation through deterministic and optional LLM-assisted Q&A.
+
+## Architecture
+
+### Data Layer
+
+- Local-first raw data loading from `data/raw/`.
+- Optional Azure Blob loading support remains available.
+- Raw CSV files are excluded from GitHub through `.gitignore`.
+
+Main source tables:
+
+- `application_train.csv`
+- `bureau.csv`
+- `previous_application.csv`
+
+### Feature Engineering Layer
+
+Feature engineering converts raw and historical credit data into one applicant-level model row.
+
+Key feature groups:
+
+- Application affordability and exposure ratios:
+  - `credit_income_ratio`
+  - `annuity_income_ratio`
+  - `credit_annuity_ratio`
+  - `credit_goods_ratio`
+  - `income_per_family_member`
+- Bureau external credit history features:
+  - active and closed bureau credit counts
+  - overdue amount
+  - external debt burden
+  - bureau debt-to-credit ratio
+- Previous-application history features:
+  - approval/refusal counts and rates
+  - previous credit amounts
+  - down payment behavior
+  - previous application timing
+
+### Model Scoring Layer
+
+- XGBoost classifier for default risk scoring.
+- Saved model artifact:
+  - `outputs/models/model.pkl`
+- Saved model feature order:
+  - `outputs/models/feature_list.json`
+- Risk score outputs:
+  - `outputs/risk_scores.csv`
+- Candidate high-risk threshold:
+  - `0.15`
+
+### Explainability Layer
+
+The project includes both global and local model explainability.
+
+Generated outputs include:
+
+- `outputs/reports/feature_importance.csv`
+- `outputs/reports/shap_global_importance.csv`
+- `outputs/plots/shap_summary_bar.png`
+- `outputs/plots/shap_summary_beeswarm.png`
+- selected SHAP dependence plots
+- local SHAP examples
+
+Local API explanations return:
+
+- `top_positive_risk_drivers`
+- `top_negative_risk_drivers`
+- value status for sentinel and special encoded values
+
+### API Layer
+
+FastAPI exposes the saved model and analyst workflow as local endpoints. The API loads saved artifacts rather than retraining.
+
+Key endpoints:
+
+| Endpoint | Purpose |
+|---|---|
+| `GET /health` | Check API and model artifact readiness. |
+| `POST /predict` | Score model-ready applicant features. |
+| `POST /predict-with-explanation` | Score applicant features and return local SHAP drivers, review recommendation, and audit id. |
+| `GET /human-review/queue` | Return a concise review queue overview. |
+| `GET /human-review/{review_case_id}` | Return detailed review case context, decision history, and linked audit log. |
+| `POST /human-review/{review_case_id}/decision` | Append an analyst review decision. |
+| `POST /ask-analyst` | Answer a single analyst question using scoring evidence, SHAP drivers, documentation retrieval, optional review context, and optional LLM assistance. |
+
+Detailed API instructions are in [API_USAGE.md](API_USAGE.md).
+
+### Governance, Audit, and Human Review Layer
+
+The API includes lightweight governance support:
+
+- Missing feature detection.
+- Unexpected feature detection.
+- Feature alignment against `feature_list.json`.
+- Rule-based human review recommendation.
+- Audit-friendly scoring logs.
+- Review queue and case detail endpoints.
+- Reviewer decision logging.
+
+Runtime JSONL logs are stored locally under:
 
 ```text
-home-credit-risk-XGBoost/
-  data/
-    raw/                         # Local raw CSV files, not uploaded to GitHub
-  notebooks/                     # Exploratory notebook reference work
-  outputs/
-    metrics/
-      metrics.json
-    models/
-      model.pkl                  # Local model artifact, not uploaded to GitHub
-      feature_list.json
-    reports/
-      feature_importance.csv
-    bureau_features.csv
-    previous_application_features.csv
-    risk_scores.csv
-  sql_queries/                   # SQL reference queries and feature logic notes
-  src/
-    config.py
-    data_ingestion.py
-    feature_engineering.py
-    model.py
-  main.py
-  requirements.txt
-  env.example
-  README.md
+outputs/api_logs/
 ```
 
-## Data
+These logs are ignored by Git because they change during local API tests.
 
-This project uses the Home Credit Default Risk dataset.
+### RAG / LLM Analyst Assistant Layer
 
-Required local files:
+The project includes two analyst-support layers:
+
+- `src/agent_memo.py`: generates a credit risk review memo from a scoring response and local documentation snippets.
+- `src/agent_query.py`: answers one analyst question from local scoring evidence, SHAP drivers, review context, and retrieved documentation.
+
+FastAPI V4.4 exposes analyst Q&A through:
 
 ```text
-data/raw/application_train.csv
-data/raw/bureau.csv
-data/raw/previous_application.csv
+POST /ask-analyst
 ```
 
-Raw CSV files, generated CSV outputs, and model pickle artifacts are excluded from GitHub through `.gitignore` because of size, licensing, and reproducibility considerations.
+The endpoint supports:
 
-## Run Locally
+- deterministic answer generation by default
+- optional LLM-assisted answer generation with `use_llm=true`
+- deterministic fallback when the LLM is disabled, unavailable, missing configuration, or fails
+- request-level LLM model override through `llm_model`
+
+No API keys or secrets are stored in the repository. LLM configuration uses environment variables such as:
+
+```text
+OPENAI_API_KEY
+OPENAI_MODEL
+```
+
+## Key Features
+
+- Local-first reproducible ML pipeline.
+- Azure Blob support as an optional data source.
+- Applicant-level feature engineering from application, bureau, and previous-application data.
+- XGBoost default risk model.
+- Risk score, risk band, and high-risk flag generation.
+- Validation-only and full-portfolio risk band reporting.
+- Feature importance and SHAP explainability.
+- FastAPI scoring service.
+- API input quality checks.
+- JSONL audit logging.
+- Rule-based human review recommendation.
+- Lightweight human review workflow.
+- SQL analytics reports using DuckDB.
+- Data model, lineage, data quality, governance, and API requirements documentation.
+- Deterministic RAG-style analyst memo and Q&A tools.
+- Optional LLM-assisted analyst answer generation with deterministic fallback.
+
+## Example Analyst Questions
+
+The `/ask-analyst` endpoint can answer questions such as:
+
+- "Why is this applicant high risk?"
+- "What are the main SHAP risk drivers?"
+- "What does EXT_SOURCE_3 mean?"
+- "Why was this case recommended for human review?"
+- "Has this case been reviewed?"
+- "What is the latest analyst decision?"
+- "What does the audit_log_id support?"
+- "Are there any data quality issues?"
+- "Which features reduce the predicted risk?"
+
+## Model Performance Snapshot
+
+Validation metric: ROC AUC.
+
+| Stage | Feature Update | Validation AUC |
+|---|---|---:|
+| Initial local baseline | Local pipeline with initial bureau and previous-application features | 0.7553 |
+| Batch 2A | Added previous-application amount features | 0.7576 |
+| Batch 2B | Added previous-application time features | 0.7577 |
+| Batch 3A | Added application affordability and exposure ratio features | 0.7645 |
+| Batch 4A | Added bureau external credit history features | 0.7649 |
+
+The AUC improvements are modest but the feature layer becomes more business-complete and easier to explain in a credit risk context.
+
+## How To Run Locally
 
 Install dependencies:
 
@@ -52,254 +207,86 @@ Install dependencies:
 pip install -r requirements.txt
 ```
 
-Place the required raw CSV files under:
+Place raw Home Credit CSV files under:
 
 ```text
 data/raw/
 ```
 
-Run the pipeline:
-From the project root directory, run:
+Run the training and reporting pipeline:
 
 ```bash
 python main.py
 ```
 
-The default data source is local:
-
-```python
-DATA_SOURCE = os.getenv("DATA_SOURCE", "local").lower()
-```
-
-Optional Azure mode can be enabled by setting:
+Start the FastAPI service:
 
 ```bash
-DATA_SOURCE=azure
+uvicorn src.api:app --reload
 ```
 
-Azure credentials should be configured from `env.example` if Azure Blob Storage is used.
-
-## Pipeline Outputs
-
-After a successful run, the pipeline generates:
+Open Swagger UI:
 
 ```text
-outputs/metrics/metrics.json
-outputs/models/model.pkl
-outputs/models/feature_list.json
-outputs/risk_scores.csv
-outputs/reports/feature_importance.csv
+http://127.0.0.1:8000/docs
 ```
 
-The metrics file records validation AUC, data source, input shapes, feature table shapes, duplicate-key checks, and merge row-count validation.
+Generate a deterministic analyst Q&A answer locally:
 
-## Feature Engineering
+```bash
+python src/agent_query.py --question "Why is this applicant high risk?"
+```
 
-The feature engineering layer converts one-to-many historical credit tables into one-row-per-applicant features that can be safely merged into `application_train`.
-
-### Previous Application Features
-
-These features summarize a borrower's prior application behavior:
-
-- `n_prev_applications`: total number of previous applications
-- `n_prev_approved`: number of previously approved applications
-- `n_prev_refusals`: number of previously refused applications
-- `prev_approval_rate`: share of previous applications approved
-- `prev_refusal_rate`: share of previous applications refused
-- `avg_annuity_prev`: average prior annuity amount
-- `avg_credit_prev`: average prior credit amount
-- `max_credit_prev`: maximum prior credit amount
-- `avg_down_payment_prev`: average prior down payment
-- `days_decision_mean`: average timing of previous application decisions
-- `last_application_days`: most recent previous application timing
-
-Business interpretation: previous refusals, approval rates, prior credit amounts, and recent credit-seeking behavior help describe historical borrower risk beyond the current application.
-
-### Application Affordability Features
-
-These features are derived directly from `application_train`:
-
-- `credit_income_ratio`: credit amount relative to borrower income
-- `annuity_income_ratio`: scheduled repayment amount relative to income
-- `credit_annuity_ratio`: credit amount relative to scheduled repayment
-- `credit_goods_ratio`: credit amount relative to goods price
-- `income_per_family_member`: income adjusted by family size
-
-Business interpretation: these ratios make the model more explainable by connecting credit exposure, repayment pressure, financing coverage, and household capacity.
-
-### Bureau Features
-
-The current bureau feature table includes:
-
-- `bureau_record_count`
-- `avg_credit_sum`
-- `total_overdue_amount`
-- `avg_days_credit_update`
-
-Business interpretation: bureau records provide external credit history signals, including exposure, overdue balances, and credit record update timing.
-
-## Model Performance
-
-Validation metric: ROC AUC.
-
-| Stage | Feature Update | Validation AUC |
-| --- | --- | ---: |
-| Initial local baseline | Local pipeline with initial bureau and previous-application features | 0.7553 |
-| Batch 2A | Added previous-application amount features | 0.7576 |
-| Batch 2B | Added previous-application time features | 0.7577 |
-| Batch 3A | Added application affordability and exposure ratio features | 0.7645 |
-
-The strongest Week 1 improvement came from adding application-level affordability and exposure ratios.
-
-## Explainability
-
-The pipeline generates:
+Use optional LLM-assisted `/ask-analyst` mode only after configuring environment variables:
 
 ```text
-outputs/reports/feature_importance.csv
+OPENAI_API_KEY
+OPENAI_MODEL
 ```
 
-The report includes:
+## Important Repository Notes
 
-- `feature`
-- `importance`
-- `importance_rank`
-- `business_category`
-- `business_interpretation`
+The following are excluded from GitHub where appropriate:
 
-Current feature importance observations:
+- raw CSV files
+- generated CSV outputs
+- model pickle artifacts
+- runtime JSONL audit logs
+- local environment files
+- virtual environments
 
-- `EXT_SOURCE_3` and `EXT_SOURCE_2` remain top-ranked external credit score features.
-- `prev_refusal_rate` ranks highly, showing that historical refusal behavior is a strong predictive signal.
-- `credit_goods_ratio` ranks highly, suggesting financing coverage is meaningful for risk prediction.
-- `avg_down_payment_prev` and `credit_annuity_ratio` also appear relatively high in the feature importance report.
+This keeps the repository suitable for portfolio review while avoiding large files, secrets, and runtime artifacts.
 
-This report is intended to make model results more interview-ready and easier to discuss with business stakeholders.
+## Limitations and Responsible Use
 
-## Validation Checks
+This project is a portfolio-grade analytical prototype, not a production credit approval engine.
 
-The pipeline records and prints checks such as:
+Important limitations:
 
-- Previous-application feature duplicate `SK_ID_CURR` count
-- Application row count before and after historical feature merges
-- Input data shapes
-- Feature table shapes
+- The API expects model-ready engineered features.
+- Raw application, bureau, and previous-application tables are not yet transformed through an API endpoint.
+- The human review workflow is local JSONL-backed and not a production case-management system.
+- Audit logs are local JSONL files, not a regulated compliance platform.
+- LLM-assisted answers are optional decision support and must not be treated as automated approval or rejection.
+- The Home Credit dataset contains anonymized and externally defined fields, so business interpretation should remain cautious.
+- No real bank deployment, real customer decisioning, authentication, authorization, monitoring, or compliance controls are claimed.
 
-Current merge validation confirms:
+## Future Enhancements
 
-- `previous_application_features` has one row per `SK_ID_CURR`
-- Duplicate `SK_ID_CURR` count is `0`
-- `application_train` row count is preserved at `307511` after merge
+Suggested next steps:
 
-## Roadmap
-
-Near-term next steps:
-
-- Add more bureau history features with clear business interpretation
-- Add evaluation reporting beyond AUC
-- Add risk score bands and portfolio-level risk summaries
-- Improve README and project documentation as the structure stabilizes
-- Add model comparison experiments only after the feature layer is stable
-
-Future ideas, not yet completed:
-
-- AI-assisted analyst workflow
-- RAG-based credit knowledge retrieval and SQL analytics assistant
-- Production deployment hardening
+- Add raw-to-feature API transformation support.
+- Add batch scoring endpoint.
+- Add stronger automated data quality reporting.
+- Add warehouse-ready scoring and audit table design.
+- Add a lightweight review dashboard or case workflow UI.
+- Add authentication and authorization if moving beyond local prototype use.
+- Add model monitoring and drift reporting.
+- Expand documentation for data dictionary and API contracts.
+- Add a production-style deployment plan without overstating current readiness.
 
 ## Portfolio Narrative
 
-I expanded an original Kaggle-style credit risk notebook into a modular, reproducible analytics pipeline. The project now converts historical one-to-many credit tables into applicant-level risk features, validates merge safety, trains an XGBoost model, saves model artifacts, and produces a business-readable feature importance report.
+This project demonstrates how a credit risk model can be expanded into a broader decision-support system. It connects data engineering, feature design, model scoring, SHAP explainability, API delivery, audit traceability, human review workflow, SQL analytics, and optional LLM-assisted analyst support.
 
-This project demonstrates practical skills in credit risk modeling, feature engineering, model evaluation, reproducible pipelines, and business interpretation for fintech and banking analytics roles.
-
-
-## Overview
-
-This project is a reproducible, business-oriented credit risk analytics pipeline built from the Home Credit Default Risk dataset. It started as a Kaggle-style notebook project and is being migrated into a modular portfolio project for fintech, banking analytics, credit risk analytics, data analyst, and risk analyst roles.
-
-The goal is not only to improve Kaggle AUC. The focus is to build a clear pipeline that connects credit risk feature engineering, model training, validation, feature importance, and business interpretation.
-
-## Business Problem
-
-Credit risk teams need to estimate the likelihood that an applicant may default while keeping decisions explainable to analysts, lenders, and business stakeholders. This project turns raw application, bureau, and previous-loan history into interpretable borrower-level risk signals and model outputs that support portfolio review and credit decision analysis.
-
-## Week 1 Status
-
-The Week 1 pipeline runs end-to-end in local mode from raw CSV files under `data/raw/`. Azure Blob Storage integration is still available as an optional data source, but local execution is the default.
-
-By the end of Week 1, the pipeline:
-- Loads `application_train.csv`, `bureau.csv`, and `previous_application.csv`
-- Builds bureau-level applicant features
-- Builds previous-application history features
-- Adds application-level affordability and exposure ratio features
-- Validates one-row-per-applicant historical feature tables before merging
-- Trains an `XGBClassifier`
-- Saves model metrics, model artifacts, risk scores, and a feature importance report
-- 
-## Week 2 Progress: SQL Analytics Layer
-
-The project now includes a DuckDB-based SQL analytics layer for portfolio segmentation.
-
-The SQL layer uses `outputs/sql_reports/risk_analytics_base.csv`, which combines model risk scores with selected applicant profile fields.
-
-Current SQL reports include:
-- risk band portfolio summary
-- income type by risk band summary
-- high-risk flag summary using the candidate 0.15 threshold
-
-This layer demonstrates how model outputs can be translated into business-facing risk analytics and portfolio monitoring reports.
-
-## SHAP Explainability Layer
-
-The project includes a SHAP-based explainability layer to interpret the XGBoost credit risk model at both global and feature-dependence levels.
-
-Generated outputs include:
-- `outputs/reports/shap_global_importance.csv`
-- `outputs/plots/shap_summary_bar.png`
-- `outputs/plots/shap_summary_beeswarm.png`
-- SHAP dependence plots for selected engineered credit risk features
-
-Key SHAP findings:
-- External source features are the strongest global predictors.
-- Engineered features such as `credit_goods_ratio`, `credit_annuity_ratio`, `bureau_debt_credit_ratio`, `prev_refusal_rate`, `prev_approval_rate`, and `avg_down_payment_prev` show meaningful model contributions.
-- `prev_refusal_rate` shows a clear positive SHAP relationship with predicted default risk.
-- `prev_approval_rate` generally contributes negatively to predicted default risk as historical approval rate increases.
-- `bureau_debt_credit_ratio` shows a positive SHAP relationship, supporting its interpretation as an external debt burden signal.
-- `avg_down_payment_prev` shows an overall downward SHAP pattern after p99 clipping, suggesting higher historical down payment is associated with lower modeled risk contribution.
-- `credit_annuity_ratio` shows a non-linear SHAP pattern, indicating that repayment structure affects model risk estimates differently across ratio ranges.
-
-This layer helps translate model predictions into business-facing explanations and now supports both offline SHAP reporting and local applicant-level API explanations.
-
-## FastAPI Scoring Service
-
-The trained XGBoost credit risk model is exposed through FastAPI as a local scoring service. The API loads saved model artifacts instead of retraining the model:
-
-- `outputs/models/model.pkl`
-- `outputs/models/feature_list.json`
-
-Current API endpoints:
-
-- `GET /health` checks service and artifact readiness.
-- `POST /predict` performs model-ready feature scoring.
-- `POST /predict-with-explanation` returns scoring results plus local SHAP drivers.
-
-FastAPI v3 adds a lightweight governance layer with rule-based human review recommendation and audit-friendly JSONL logging.
-
-Key API outputs:
-
-- `risk_score`
-- `risk_band`
-- `high_risk_flag_015`
-- `top_positive_risk_drivers`
-- `top_negative_risk_drivers`
-- `human_review_recommendation`
-- `audit_log_id`
-
-Supporting files:
-
-- `API_USAGE.md` contains detailed instructions for running and testing the API.
-- `outputs/api_samples/` contains sample payloads and sample responses for developer testing.
-- `outputs/api_logs/*.jsonl` is ignored because audit logs are runtime artifacts.
-
-This layer upgrades the project from an offline modeling and reporting pipeline into an explainable scoring service prototype suitable for portfolio demonstration.
+The result is a practical, interview-ready portfolio project for data technology, risk analytics, fintech analytics, and banking analytics roles.

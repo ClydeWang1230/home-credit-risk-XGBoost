@@ -2,11 +2,11 @@
 
 ## Purpose
 
-This API exposes the trained Home Credit XGBoost credit risk model through a local FastAPI scoring endpoint.
+This API exposes the trained Home Credit XGBoost credit risk model through local FastAPI endpoints for scoring, explanation, governance support, human review workflow, and analyst Q&A.
 
-FastAPI v3.1 supports model scoring, local applicant-level SHAP explanations, a rule-based human review recommendation, audit-friendly JSONL scoring logs, and a lightweight human review case workflow.
+The current API version is V4.4. It is designed as a portfolio-grade decision-support prototype that demonstrates model serving, input validation, local SHAP explanations, audit traceability, rule-based review recommendations, RAG-style retrieval, and optional LLM-assisted analyst Q&A. It is not an automated credit approval or rejection system.
 
-## How to Start the API
+## Start the API Locally
 
 From the project root, start the API with:
 
@@ -26,7 +26,25 @@ The local API runs at:
 http://127.0.0.1:8000
 ```
 
-## Endpoints
+Swagger UI is available at:
+
+```text
+http://127.0.0.1:8000/docs
+```
+
+## Endpoint Summary
+
+| Method | Endpoint | Purpose |
+|---|---|---|
+| `GET` | `/health` | Checks API and model artifact readiness. |
+| `POST` | `/predict` | Scores one model-ready applicant feature payload. |
+| `POST` | `/predict-with-explanation` | Scores one applicant and returns local SHAP risk drivers, human review recommendation, and audit metadata. |
+| `GET` | `/human-review/queue` | Returns the local analyst review queue. |
+| `GET` | `/human-review/{review_case_id}` | Returns one review case, decision history, latest decision, and linked audit record. |
+| `POST` | `/human-review/{review_case_id}/decision` | Appends an analyst decision for one review case. |
+| `POST` | `/ask-analyst` | Answers one analyst question using scoring evidence, review context, retrieved documentation, and optional LLM assistance. |
+
+## Scoring Endpoints
 
 ### `GET /health`
 
@@ -66,97 +84,52 @@ Request body example:
 }
 ```
 
-`features` is a dictionary of model feature names and values.
+`features` is a dictionary of model feature names and values. `strict=false` fills missing model features with `-999`; `strict=true` requires all 131 model features. Unexpected extra features are ignored and reported in the response.
 
-`strict=false` fills missing model features with `-999`.
+Key response fields:
 
-`strict=true` requires all 131 model features.
-
-For realistic testing, use the generated complete sample payload.
+- `risk_score`
+- `risk_band`
+- `high_risk_flag_015`
+- `threshold_used`
+- `model_version`
+- `missing_feature_count`
+- `missing_features_preview`
+- `unexpected_feature_count`
+- `unexpected_features_preview`
 
 ### `POST /predict-with-explanation`
 
 Accepts the same request body as `/predict`, returns the same scoring fields, and adds local applicant-level SHAP explanation drivers.
 
-This endpoint also returns a rule-based human review recommendation and writes an audit-friendly JSONL log entry.
-If review is required, it also creates a lightweight human review case that can be viewed through the review queue endpoint.
+The endpoint also returns a rule-based human review recommendation, writes an audit-friendly JSONL log entry, and creates a lightweight human review case when review is required.
 
-Request body example:
-
-```json
-{
-  "features": {
-    "AMT_CREDIT": 500000,
-    "AMT_ANNUITY": 25000
-  },
-  "strict": false
-}
-```
-
-The explanation section includes:
+Key additional response fields:
 
 - `top_positive_risk_drivers`: features pushing the prediction toward higher default risk
 - `top_negative_risk_drivers`: features pushing the prediction toward lower default risk
-- `explanation_note`: short explanation of positive and negative SHAP values
-
-Each SHAP driver includes:
-
-```json
-{
-  "feature": "EXT_SOURCE_3",
-  "feature_value": 0.12,
-  "value_status": "actual_value",
-  "shap_value": 0.41,
-  "contribution_direction": "positive_risk_drive",
-  "contribution_rank": 1
-}
-```
+- `explanation_note`
+- `human_review_recommendation`
+- `audit_log_id`
+- `human_review_case`, when a review case is created
 
 Positive SHAP values increase the model output toward higher predicted default risk. Negative SHAP values decrease the model output toward lower predicted default risk.
 
-The human review recommendation is a lightweight rules layer based on risk score, input quality, and SHAP signal strength. It supports analyst workflow triage, but it does not replace analyst judgment.
-
-Example governance fields:
-
-```json
-{
-  "human_review_recommendation": {
-    "review_required": true,
-    "review_priority": "high",
-    "review_reasons": [
-      "Risk score is above the candidate high-risk threshold.",
-      "Strong positive SHAP risk drivers are present."
-    ]
-  },
-  "audit_log_id": "b9c4f3f4-7c7e-4f5e-8c4d-55d6df4d3b4b",
-  "human_review_case": {
-    "review_case_id": "7d54ad71-1c47-4b38-8e40-8ef46602d310",
-    "status": "pending_review",
-    "review_priority": "high"
-  }
-}
-```
-
-Audit log path:
+Audit and review logs are stored locally:
 
 ```text
 outputs/api_logs/scoring_audit_log.jsonl
-```
-
-Human review case and decision logs:
-
-```text
 outputs/api_logs/human_review_cases.jsonl
 outputs/api_logs/human_review_decisions.jsonl
 ```
 
+## Human Review Workflow
+
 ### `GET /human-review/queue`
 
-Returns a concise overview list of lightweight human review cases created by `/predict-with-explanation`.
+Returns a concise local review queue for cases created by `/predict-with-explanation`.
 
-The queue is designed as a readable list view. Each item includes `case_number`, `case_label`, review status, risk score, risk band, review priority, audit log id, and latest review decision summary fields. Cases are sorted by `created_at_utc` descending so the newest cases appear first.
-
-The queue intentionally omits review reasons, SHAP driver previews, decision history, and linked audit details. Use `GET /human-review/{review_case_id}` for the detailed investigation view.
+The queue is designed as a list view. Each item includes case identifiers, status fields, risk score, risk band, review priority, audit log id, and latest decision summary fields. Cases are sorted by `created_at_utc` descending so newer cases appear first.
 
 Example:
 
@@ -172,7 +145,17 @@ http://127.0.0.1:8000/human-review/queue?status=pending_review
 
 ### `GET /human-review/{review_case_id}`
 
-Returns detail for one human review case. The response includes the review case, latest analyst decision when available, full decision history, and the linked scoring audit record when the `audit_log_id` can be matched.
+Returns detail for one human review case.
+
+The response includes:
+
+- `review_case_id`
+- `review_case`
+- `latest_decision`
+- `decision_history`
+- `linked_audit_log`
+
+`original_case_status` is the status when the case entered the local review queue. `effective_review_status` reflects the latest analyst decision status when one exists; otherwise it falls back to the original case status.
 
 Example:
 
@@ -180,11 +163,9 @@ Example:
 http://127.0.0.1:8000/human-review/<review_case_id>
 ```
 
-This endpoint supports local analyst review traceability. It is not a production approval system or compliance case-management tool.
-
 ### `POST /human-review/{review_case_id}/decision`
 
-Records a reviewer decision for a human review case. Decisions are appended to a local JSONL file.
+Records an analyst decision for a human review case. Decisions are appended to a local JSONL file.
 
 Request body example:
 
@@ -197,165 +178,116 @@ Request body example:
 }
 ```
 
-This workflow is intentionally lightweight. It supports prototype review traceability, but it is not a production review queue or case-management system.
-
-## Single-Turn Analyst Q&A
-
-The project also includes a local single-turn analyst Q&A script:
-
-```bash
-python src/agent_query.py --question "Why is this applicant high risk?"
-```
-
-To include local human review case context:
-
-```bash
-python src/agent_query.py --question "Has this case been reviewed?" --review-case-id "<review_case_id>"
-```
-
-The script saves its markdown answer to:
-
-```text
-outputs/agent_outputs/analyst_question_answer.md
-```
-
-Current V4.2 uses deterministic keyword retrieval and template-based answer generation over the API scoring response, local project documentation, and optional review context. LLM-assisted generation, embeddings, vector databases, and multi-turn conversation are planned for later versions.
+This workflow supports local analyst review traceability. It is not a production case-management or approval system.
 
 ## Analyst Q&A Endpoint
 
-FastAPI V4.3 exposes the same deterministic analyst Q&A capability through:
+### `POST /ask-analyst`
 
-```text
-POST /ask-analyst
-```
+Answers one analyst-style question about an existing scoring response, optional human review case, and local project documentation. The endpoint does not run a new model prediction.
 
-The endpoint answers one analyst-style question about an existing scoring response. It does not run a new model prediction.
+The endpoint supports two answer modes:
 
-Request fields:
+- deterministic mode, which uses local rules, retrieved snippets, and structured templates
+- LLM-assisted mode, which adds an optional grounded natural-language answer while preserving deterministic structured output
 
-- `question`: required analyst question.
-- `scoring_response`: optional copied response from `/predict-with-explanation`.
-- `review_case_id`: optional local human review case id.
-- `max_snippets`: number of retrieved documentation snippets, default `6`.
-- `include_markdown_answer`: whether to include the full markdown answer, default `false`.
+`include_markdown_answer` defaults to `false` because API JSON is meant for structured system and frontend consumption. `markdown_answer` is optional and useful when a UI or report export wants a preformatted Markdown answer.
 
-For normal Swagger testing, keep `include_markdown_answer=false`. The endpoint is designed to return structured JSON for API consumers, and `answer_sections` is the preferred readable response field. Use `markdown_answer` only when a UI wants to render or export Markdown.
+### `/ask-analyst` Request Fields
 
-Example request using a copied scoring response:
+| Field | Type | Description |
+|---|---|---|
+| `question` | string | Required analyst question. |
+| `scoring_response` | object or null | Optional copied response from `/predict-with-explanation`. If omitted, the endpoint may use available local sample response data for development testing. |
+| `review_case_id` | string or null | Optional local review case id used to load case detail, decision history, and linked audit context. |
+| `max_snippets` | integer | Maximum number of retrieved documentation snippets to include. |
+| `include_markdown_answer` | boolean | Whether to include `markdown_answer`; defaults to `false`. |
+| `use_llm` | boolean | Whether to attempt optional LLM-assisted generation; defaults to `false`. |
+| `llm_model` | string or null | Optional per-request LLM model override, such as `gpt-4o-mini`. |
+| `llm_temperature` | number | LLM temperature for answer generation; defaults to a low analyst-style value. |
+| `llm_max_context_snippets` | integer | Maximum retrieved snippets passed into the LLM prompt. |
+| `llm_style` | string | Optional style hint, defaulting to an analyst-oriented style. |
 
-```json
-{
-  "question": "Why is this applicant high risk?",
-  "scoring_response": {
-    "risk_score": 0.7146458029747009,
-    "risk_band": "Band 5 - Highest Risk",
-    "high_risk_flag_015": 1,
-    "threshold_used": 0.15,
-    "model_version": "xgboost_v1",
-    "missing_feature_count": 0,
-    "unexpected_feature_count": 0,
-    "top_positive_risk_drivers": [],
-    "top_negative_risk_drivers": [],
-    "human_review_recommendation": {
-      "review_required": true,
-      "review_priority": "high",
-      "review_reasons": [
-        "Risk score is above the candidate high-risk threshold."
-      ]
-    },
-    "audit_log_id": "example-audit-log-id"
-  }
-}
-```
+### `/ask-analyst` Response Fields
 
-Example request with review context:
+| Field | Description |
+|---|---|
+| `question` | The submitted analyst question. |
+| `detected_intent` | Deterministic intent classification, such as feature definition, risk drivers, governance traceability, or review status. |
+| `answer_summary` | Short deterministic summary. |
+| `answer_sections` | Structured deterministic answer sections for frontend or analyst review. |
+| `markdown_answer` | Optional Markdown answer when requested. |
+| `scoring_response_source` | Source used for scoring evidence, such as request payload or local sample response. |
+| `scoring_evidence` | Key score, threshold, model, audit, and review recommendation fields. |
+| `driver_preview` | Compact positive and negative SHAP driver previews. |
+| `review_context_loaded` | Whether review case context was successfully loaded. |
+| `review_context_summary` | Review case status, effective status, latest decision, decision count, and linked audit availability. |
+| `retrieved_context` | Local documentation snippets used as grounding context. |
+| `warnings` | Non-fatal warnings, such as missing optional context. |
+| `limitations` | Decision-support and interpretation limitations. |
+| `answer_mode` | `deterministic` or `llm_assisted`. |
+| `llm_enabled` | Whether LLM generation succeeded for this response. |
+| `llm_answer` | Optional LLM-generated analyst answer, or `null` when disabled or unavailable. |
+| `llm_model` | Actual LLM model attempted or used, when applicable. |
+| `llm_warnings` | LLM-specific warnings and fallback reasons. |
 
-```json
-{
-  "question": "Has this case been reviewed?",
-  "review_case_id": "<review_case_id>"
-}
-```
+## `/ask-analyst` Example Requests
 
-Example questions:
-
-- "Why is this applicant high risk?"
-- "What does EXT_SOURCE_3 mean?"
-- "Why was this case recommended for human review?"
-- "Has this case been reviewed?"
-- "What does the audit_log_id support?"
-
-Response highlights:
-
-- `detected_intent`
-- `answer_summary`
-- `answer_sections`
-- `markdown_answer`
-- `scoring_evidence`
-- `driver_preview`
-- `review_context_summary`
-- `retrieved_context`
-- `warnings`
-- `limitations`
-
-`answer_sections` includes readable fields such as:
-
-- `short_answer`
-- `key_scoring_points`
-- `human_review_points`
-- `retrieval_notes`
-- `analyst_interpretation`
-
-`retrieved_context` returns compact previews only: `source`, `score`, and a truncated `text_preview`.
-
-For review context, `original_case_status` is the status recorded when the case entered the local review queue. `effective_review_status` reflects the latest analyst decision status when one exists; otherwise it falls back to `original_case_status`.
-
-Current V4.3 limitations:
-
-- Deterministic keyword retrieval.
-- Template-based answer generation.
-- No LLM calls yet.
-- No vector database.
-- No multi-turn memory.
-- Analyst decision support only.
-
-## LLM-Assisted Analyst Q&A
-
-V4.4 adds optional LLM-assisted answer generation to `POST /ask-analyst`.
-
-LLM mode is disabled by default. When `use_llm=false`, the endpoint returns the deterministic V4.3 response. When `use_llm=true`, the endpoint attempts to generate an additional grounded analyst-style answer while still returning the deterministic structured fields.
-
-Environment variables:
-
-```text
-OPENAI_API_KEY
-OPENAI_MODEL
-```
-
-No API key is committed to the repository. If `OPENAI_API_KEY` is missing, the OpenAI package is unavailable, or the LLM call fails, the endpoint falls back to deterministic output and returns a warning.
-
-Deterministic request:
-
-```json
-{
-  "question": "Why is this applicant high risk?",
-  "include_markdown_answer": false,
-  "use_llm": false
-}
-```
-
-LLM-assisted request:
+### A. Deterministic Analyst Q&A
 
 ```json
 {
   "question": "Why is this applicant high risk?",
   "max_snippets": 6,
   "include_markdown_answer": false,
-  "use_llm": true
+  "use_llm": false
 }
 ```
 
-LLM-assisted request with review context:
+Expected behavior:
+
+- `answer_mode` is `deterministic`
+- `llm_enabled` is `false`
+- `llm_answer` is `null`
+- deterministic fields such as `answer_summary`, `answer_sections`, `scoring_evidence`, and `retrieved_context` are returned
+
+### B. LLM-Assisted Analyst Q&A
+
+```json
+{
+  "question": "Why is this applicant high risk?",
+  "max_snippets": 6,
+  "include_markdown_answer": false,
+  "use_llm": true,
+  "llm_model": "gpt-4o-mini"
+}
+```
+
+Expected behavior when LLM configuration is available:
+
+- `answer_mode` is `llm_assisted`
+- `llm_enabled` is `true`
+- `llm_answer` contains a grounded analyst-style response
+- deterministic structured fields are still returned for auditability and fallback
+
+### C. Review-Status Question
+
+```json
+{
+  "question": "Has this case been reviewed?",
+  "review_case_id": "example-review-case-id",
+  "max_snippets": 6,
+  "include_markdown_answer": false,
+  "use_llm": false
+}
+```
+
+Expected behavior:
+
+- `review_context_loaded` is `true` when the case exists
+- `review_context_summary` shows original case status, effective review status, latest decision, decision history count, and linked audit availability
+
+### D. LLM Fallback Example
 
 ```json
 {
@@ -363,81 +295,61 @@ LLM-assisted request with review context:
   "review_case_id": "example-review-case-id",
   "max_snippets": 6,
   "include_markdown_answer": false,
-  "use_llm": true
+  "use_llm": true,
+  "llm_model": "gpt-4o-mini"
 }
 ```
 
-LLM response fields:
+If the API key is missing, quota is unavailable, model access fails, or the LLM package is not installed, the endpoint should still return the deterministic answer.
 
-- `answer_mode`: `deterministic` or `llm_assisted`
-- `llm_enabled`
-- `llm_answer`
-- `llm_model`
-- `llm_warnings`
+Expected fallback behavior:
 
-Optional request field `llm_model` can override `OPENAI_MODEL` for a single request. If `llm_model` is empty, the endpoint falls back to the default LLM model configuration and returns a warning.
+- `answer_mode` is `deterministic`
+- `llm_enabled` is `false`
+- `llm_answer` is `null`
+- `llm_warnings` explains why LLM generation was not used
 
-The LLM prompt is grounded in the scoring response, SHAP driver preview, human review context, and retrieved project documentation snippets. It is not a credit approval decision and should be treated as analyst decision support only.
+## LLM Configuration
 
-## Complete Sample Payload
+LLM mode uses environment variables. No API key or secret should be committed to the repository.
 
-Sample payload:
+```text
+OPENAI_API_KEY
+OPENAI_MODEL
+```
+
+`llm_model` can override `OPENAI_MODEL` for a single `/ask-analyst` request. If no model override is provided, the endpoint uses the configured default model behavior in the application code.
+
+The LLM answer is grounded in:
+
+- scoring evidence
+- SHAP driver previews
+- human review context, when provided
+- retrieved project documentation snippets
+
+The LLM should not invent applicant facts, lending policies, thresholds, or approval decisions.
+
+## Complete Sample Payloads
+
+Complete prediction payload:
 
 ```text
 outputs/api_samples/sample_predict_payload.json
 ```
 
-Sample metadata:
+Payload metadata:
 
 ```text
 outputs/api_samples/sample_predict_payload_metadata.json
 ```
 
-The sample payload contains a complete real applicant feature row with all 131 model features.
-
-## Testing in Swagger UI
-
-Open:
+Sample explanation or governance responses may also be available under:
 
 ```text
-http://127.0.0.1:8000/docs
+outputs/api_samples/
 ```
 
-Then:
-
-1. Expand `POST /predict`
-2. Click `Try it out`
-3. Paste the full content of `outputs/api_samples/sample_predict_payload.json`
-4. Click `Execute`
-5. Confirm that `missing_feature_count = 0` and `unexpected_feature_count = 0`
-
-The same sample payload can also be used with `POST /predict-with-explanation` to test local SHAP explanations.
-
-Example successful response:
-
-```json
-{
-  "risk_score": 0.7146458029747009,
-  "risk_band": "Band 5 - Highest Risk",
-  "high_risk_flag_015": 1,
-  "threshold_used": 0.15,
-  "model_version": "xgboost_v1",
-  "missing_feature_count": 0,
-  "missing_features_preview": [],
-  "unexpected_feature_count": 0,
-  "unexpected_features_preview": []
-}
-```
-The response fields can be interpreted as follows:
-
-- `risk_score` is the model-predicted default risk score for the submitted applicant.
-- `risk_band` translates the numeric score into a business-facing portfolio risk segment.
-- `high_risk_flag_015` indicates whether the applicant is above the candidate high-risk threshold of 0.15.
-- `threshold_used` records the decision threshold used in this API version for traceability.
-- `missing_feature_count` and `unexpected_feature_count` help validate API input quality before using the prediction for analysis or review.
-- `human_review_recommendation` summarizes whether the case should be reviewed by an analyst under the current rule set.
-- `audit_log_id` links the response to the JSONL audit log entry.
-- `human_review_case` links explanation-enabled scoring to a lightweight review case when review is required.
+These files are intended for developer testing and portfolio demonstration.
 
 ## curl Examples
 
@@ -455,7 +367,7 @@ curl -X POST "http://127.0.0.1:8000/predict" \
   -d '{"features":{"AMT_CREDIT":500000,"AMT_ANNUITY":25000},"strict":false}'
 ```
 
-Prediction request with local SHAP explanation:
+Prediction with local SHAP explanation:
 
 ```bash
 curl -X POST "http://127.0.0.1:8000/predict-with-explanation" \
@@ -469,33 +381,37 @@ View pending review cases:
 curl "http://127.0.0.1:8000/human-review/queue?status=pending_review"
 ```
 
-View one review case with linked audit context:
+Ask an analyst question:
 
 ```bash
-curl "http://127.0.0.1:8000/human-review/<review_case_id>"
-```
-
-Record a review decision:
-
-```bash
-curl -X POST "http://127.0.0.1:8000/human-review/<review_case_id>/decision" \
+curl -X POST "http://127.0.0.1:8000/ask-analyst" \
   -H "Content-Type: application/json" \
-  -d '{"review_decision":"manual_review_completed","reviewer":"analyst_1","notes":"Reviewed high-risk drivers.","status":"review_completed"}'
+  -d '{"question":"Why is this applicant high risk?","include_markdown_answer":false,"use_llm":false}'
 ```
 
 On Windows PowerShell, `curl.exe` may be safer than `curl` because `curl` can be aliased to `Invoke-WebRequest`.
 
+## Responsible Use
+
+- API outputs are analyst decision support.
+- The system is not an automated credit approval or rejection engine.
+- Human review recommendations are rule-based triage signals, not final decisions.
+- LLM-assisted answers should remain grounded in scoring evidence, SHAP drivers, retrieved documentation, and review context.
+- The current implementation is a local analytical prototype, not a production banking platform.
+
 ## Current Limitations
 
-- FastAPI v3 expects model-ready engineered features.
-- It does not yet transform raw application, bureau, or previous application tables into model features.
-- The human review recommendation is rule-based and should be treated as decision-support only.
-- The audit log is local JSONL and is not a production database or compliance system.
-- The human review workflow is local JSONL-backed and is not a production case-management system.
-- The sample payload is for developer testing, not final end-user interaction.
+- The API expects model-ready engineered features.
+- It does not yet transform raw application, bureau, or previous application records into model features at request time.
+- Audit logs and human review records are local JSONL artifacts, not a production database.
+- The analyst assistant is single-turn and local-context grounded.
+- LLM mode is optional and depends on external API availability when enabled.
 
-## Next Steps
+## Future Enhancements
 
-- Add stronger production logging and monitoring.
+- Add raw-to-feature scoring support.
+- Add batch scoring endpoints.
 - Add authentication and access control for deployed environments.
-- Later support more user-friendly input formats or batch scoring.
+- Add stronger monitoring and production logging patterns.
+- Add richer analyst workflow screens or dashboard integration.
+- Expand documentation-grounded analyst Q&A with controlled multi-turn context.
